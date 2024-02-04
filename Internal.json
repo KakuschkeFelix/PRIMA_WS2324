@@ -7,7 +7,7 @@
   },
   "Material|2024-02-03T14:39:49.367Z|14004": {
     "ƒ.Material": {
-      "name": "RoadStraight",
+      "name": "texRoadStraight",
       "idResource": "Material|2024-02-03T14:39:49.367Z|14004",
       "shader": "ShaderLitTextured",
       "coat": {
@@ -301,66 +301,6 @@
             "children": [
               {
                 "ƒ.Node": {
-                  "name": "Road",
-                  "active": true,
-                  "components": {
-                    "ComponentTransform": [
-                      {
-                        "ƒ.ComponentTransform": {
-                          "local": {
-                            "translation": "[0, 0, -2]",
-                            "rotation": "[0, 0, 0]",
-                            "scaling": "[1, 1, 1]"
-                          },
-                          "Component": {
-                            "active": true
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  "children": [
-                    {
-                      "ƒ.GraphInstance": {
-                        "deserializeFromSource": true,
-                        "idSource": "Graph|2024-02-03T15:57:52.807Z|09456"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "ƒ.Node": {
-                  "name": "Road",
-                  "active": true,
-                  "components": {
-                    "ComponentTransform": [
-                      {
-                        "ƒ.ComponentTransform": {
-                          "local": {
-                            "translation": "[0, 0, 4]",
-                            "rotation": "[0, 0, 0]",
-                            "scaling": "[1, 1, 1]"
-                          },
-                          "Component": {
-                            "active": true
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  "children": [
-                    {
-                      "ƒ.GraphInstance": {
-                        "deserializeFromSource": true,
-                        "idSource": "Graph|2024-02-03T15:57:54.374Z|19553"
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                "ƒ.Node": {
                   "name": "StartStop",
                   "active": true,
                   "components": {
@@ -550,36 +490,6 @@
                     }
                   ]
                 }
-              },
-              {
-                "ƒ.Node": {
-                  "name": "Road",
-                  "active": true,
-                  "components": {
-                    "ComponentTransform": [
-                      {
-                        "ƒ.ComponentTransform": {
-                          "local": {
-                            "translation": "[0, 0, 2]",
-                            "rotation": "[0, 0, 0]",
-                            "scaling": "[1, 1, 1]"
-                          },
-                          "Component": {
-                            "active": true
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  "children": [
-                    {
-                      "ƒ.GraphInstance": {
-                        "deserializeFromSource": true,
-                        "idSource": "Graph|2024-02-03T15:57:52.807Z|09456"
-                      }
-                    }
-                  ]
-                }
               }
             ]
           }
@@ -599,7 +509,7 @@
   },
   "Graph|2024-02-03T15:57:52.807Z|09456": {
     "ƒ.Graph": {
-      "name": "Straight",
+      "name": "graphStraight",
       "active": true,
       "components": {
         "ComponentTransform": [
@@ -628,7 +538,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[0.5, 0, 0]",
+                      "translation": "[0.5, -0.25, 0]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -670,7 +580,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[-0.5, 0, 0]",
+                      "translation": "[-0.5, -0.25, 0]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -712,7 +622,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[-0.5, 0, -1]",
+                      "translation": "[-0.5, -0.25, -1]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -754,7 +664,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[0.5, 0, -1]",
+                      "translation": "[0.5, -0.25, -1]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -793,7 +703,7 @@
   },
   "Graph|2024-02-03T15:57:54.374Z|19553": {
     "ƒ.Graph": {
-      "name": "Turn",
+      "name": "graphTurn",
       "active": true,
       "components": {
         "ComponentTransform": [
@@ -822,7 +732,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[0.5, 0, 0]",
+                      "translation": "[0.5, -0.25, 0]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -864,7 +774,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[0.5, 0, -1]",
+                      "translation": "[0.5, -0.25, -1]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -906,7 +816,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[-0.5, 0, 0]",
+                      "translation": "[-0.5, -0.25, 0]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -948,7 +858,7 @@
                   "ƒ.ComponentMesh": {
                     "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
                     "pivot": {
-                      "translation": "[-0.5, 0, -1]",
+                      "translation": "[-0.5, -0.25, -1]",
                       "rotation": "[-90, 0, 0]",
                       "scaling": "[1, 1, 1]"
                     },
@@ -982,6 +892,99 @@
         }
       ],
       "idResource": "Graph|2024-02-03T15:57:54.374Z|19553",
+      "type": "Graph"
+    }
+  },
+  "Material|2024-02-04T13:49:52.075Z|29901": {
+    "ƒ.Material": {
+      "name": "texGrass",
+      "idResource": "Material|2024-02-04T13:49:52.075Z|29901",
+      "shader": "ShaderLitTextured",
+      "coat": {
+        "ƒ.CoatTextured": {
+          "color": "[1, 1, 1, 1]",
+          "idTexture": "TextureImage|2024-02-04T13:50:06.063Z|45548"
+        }
+      }
+    }
+  },
+  "TextureImage|2024-02-04T13:50:06.063Z|45548": {
+    "ƒ.TextureImage": {
+      "url": "Assets\\Images\\Background\\grass.png",
+      "type": "TextureImage",
+      "Texture": {
+        "idResource": "TextureImage|2024-02-04T13:50:06.063Z|45548",
+        "name": "Assets\\Images\\Background\\grass.png",
+        "mipmap": "CRISP",
+        "wrap": "REPEAT"
+      }
+    }
+  },
+  "Graph|2024-02-04T13:56:39.694Z|37426": {
+    "ƒ.Graph": {
+      "name": "graphGrass",
+      "active": true,
+      "components": {
+        "ComponentTransform": [
+          {
+            "ƒ.ComponentTransform": {
+              "local": {
+                "translation": "[0, 0, 0]",
+                "rotation": "[0, 0, 0]",
+                "scaling": "[1, 1, 1]"
+              },
+              "Component": {
+                "active": true
+              }
+            }
+          }
+        ]
+      },
+      "children": [
+        {
+          "ƒ.Node": {
+            "name": "GrassTile",
+            "active": true,
+            "components": {
+              "ComponentMesh": [
+                {
+                  "ƒ.ComponentMesh": {
+                    "idMesh": "MeshQuad|2024-02-03T14:31:26.222Z|80000",
+                    "pivot": {
+                      "translation": "[0, -0.25099998712539673, -0.5]",
+                      "rotation": "[-90, 0, 0]",
+                      "scaling": "[2, 2, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ],
+              "ComponentMaterial": [
+                {
+                  "ƒ.ComponentMaterial": {
+                    "sortForAlpha": false,
+                    "clrPrimary": "[1, 1, 1, 1]",
+                    "clrSecondary": "[1, 1, 1, 1]",
+                    "pivot": {
+                      "translation": "[0, 0]",
+                      "rotation": 0,
+                      "scaling": "[2, 2]"
+                    },
+                    "Component": {
+                      "active": true
+                    },
+                    "idMaterial": "Material|2024-02-04T13:49:52.075Z|29901"
+                  }
+                }
+              ]
+            },
+            "children": []
+          }
+        }
+      ],
+      "idResource": "Graph|2024-02-04T13:56:39.694Z|37426",
       "type": "Graph"
     }
   }

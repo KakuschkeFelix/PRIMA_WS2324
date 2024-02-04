@@ -75,3 +75,36 @@ declare namespace Script {
         nextAction(_position: fudge.Vector3): [number, number];
     }
 }
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TrackBuilder {
+        buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
+        buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    const TILE_WIDTH = 2;
+    type Track = Tile[][];
+    const OFFSET: fudge.Vector2;
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TileGrass extends fudge.Node implements Tile {
+        constructor();
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TileStraight extends fudge.Node implements Tile {
+        constructor();
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    interface Tile extends fudge.Node {
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+    }
+}

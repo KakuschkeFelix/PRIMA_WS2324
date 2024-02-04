@@ -44,6 +44,7 @@ var Script;
     let camera;
     let cars = [];
     let pcCar;
+    let track;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
     async function start(_event) {
         viewport = _event.detail;
@@ -54,6 +55,8 @@ var Script;
         viewport.camera = camera.cmp;
         const graph = viewport.getBranch();
         await createCars(graph);
+        const trackNode = buildTrack(Script.OFFSET);
+        graph.appendChild(trackNode);
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
     }
@@ -63,6 +66,16 @@ var Script;
         await Promise.all(cars.map(car => car.initializeAnimation()));
         cars.forEach(car => graph.addChild(car));
         console.log(cars[0]);
+    }
+    function buildTrack(offset) {
+        track = [
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()]
+        ];
+        const trackBuilder = new Script.TrackBuilder();
+        return trackBuilder.buildTrack(track, offset);
     }
     function update(_event) {
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
@@ -154,9 +167,6 @@ var Script;
                 this.acceleration = new fudge.Vector3(0, 0, 0);
             }
             this.speed.add(this.acceleration);
-            if (this.color === Script.PC_CAR_COLOR) {
-                console.log(this.speed.magnitude / timeDeltaSeconds, this.acceleration.magnitude / timeDeltaSeconds);
-            }
             if (this.speed.magnitude / timeDeltaSeconds > Script.CAR_MAX_SPEED) {
                 this.speed.normalize(Script.CAR_MAX_SPEED * timeDeltaSeconds);
             }
@@ -258,5 +268,106 @@ var Script;
         }
     }
     Script.KeyboardHandler = KeyboardHandler;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TrackBuilder {
+        buildTrack(track, offset) {
+            const trackGraph = new fudge.Node("TrackAbc");
+            for (let z = 0; z < track.length; z++) {
+                for (let x = 0; x < track[z].length; x++) {
+                    if (!(x + offset.x === 0 && z + offset.y === 0)) {
+                        this.buildTile(track[z][x], new fudge.Vector3(x, 0, z), trackGraph, offset);
+                    }
+                }
+            }
+            return trackGraph;
+        }
+        buildTile(tile, position, trackGraph, offset) {
+            const node = new fudge.Node(`${position.x}_${position.z}`);
+            tile.build(position, offset);
+            node.appendChild(tile);
+            node.addComponent(new fudge.ComponentTransform());
+            node.mtxLocal.translate(position);
+            trackGraph.appendChild(node);
+            return trackGraph;
+        }
+    }
+    Script.TrackBuilder = TrackBuilder;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    Script.TILE_WIDTH = 2;
+    Script.OFFSET = new fudge.Vector2(-1, -1);
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TileGrass extends fudge.Node {
+        constructor() {
+            const name = "TileGrass";
+            super(name);
+        }
+        build(position, offset) {
+            position.add(new fudge.Vector3(offset.x, 0, offset.y));
+            position.scale(-1);
+            const material = fudge.Project.getResourcesByName("texGrass")[0];
+            this.addComponent(new fudge.ComponentTransform());
+            const mtx = new fudge.Matrix4x4();
+            mtx.translate(new fudge.Vector3(0, -0.251, -0.5));
+            mtx.rotateX(-90);
+            let node = new fudge.Node(`Quad`);
+            let cmpMesh = new fudge.ComponentMesh();
+            let mesh = new fudge.MeshQuad();
+            cmpMesh.mesh = mesh;
+            cmpMesh.mtxPivot.scale(new fudge.Vector3(Script.TILE_WIDTH, Script.TILE_WIDTH, Script.TILE_WIDTH));
+            node.addComponent(cmpMesh);
+            let cmpMaterial = new fudge.ComponentMaterial(material);
+            node.addComponent(cmpMaterial);
+            node.addComponent(new fudge.ComponentTransform(mtx));
+            this.appendChild(node);
+            this.mtxLocal.translate(position);
+        }
+    }
+    Script.TileGrass = TileGrass;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TileStraight extends fudge.Node {
+        constructor() {
+            const name = "TileStraight";
+            super(name);
+        }
+        build(position, offset) {
+            position.add(new fudge.Vector3(offset.x, 0, offset.y));
+            position.scale(-1);
+            const material = fudge.Project.getResourcesByName("texRoadStraight")[0];
+            this.addComponent(new fudge.ComponentTransform());
+            for (let x = 0; x < 2; x++) {
+                for (let z = 0; z < 2; z++) {
+                    const mtx = new fudge.Matrix4x4();
+                    mtx.translate(new fudge.Vector3(x - 0.5, -0.25, z - 1));
+                    mtx.rotateX(-90);
+                    let node = new fudge.Node(`Quad_${x}_${z}`);
+                    let cmpMesh = new fudge.ComponentMesh();
+                    let mesh = new fudge.MeshQuad();
+                    cmpMesh.mesh = mesh;
+                    node.addComponent(cmpMesh);
+                    let cmpMaterial = new fudge.ComponentMaterial(material);
+                    if (x === 1) {
+                        cmpMaterial.mtxPivot.rotate(180);
+                    }
+                    node.addComponent(cmpMaterial);
+                    node.addComponent(new fudge.ComponentTransform(mtx));
+                    this.appendChild(node);
+                }
+            }
+            this.mtxLocal.translate(position);
+        }
+    }
+    Script.TileStraight = TileStraight;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

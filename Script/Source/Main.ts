@@ -6,6 +6,7 @@ namespace Script {
   let camera: Camera;
   let cars: Car[] = [];
   let pcCar: Car;
+  let track: Track;
   document.addEventListener("interactiveViewportStarted", (event: any) => start(event));
 
   async function start(_event: CustomEvent): Promise<void> {
@@ -20,6 +21,8 @@ namespace Script {
     const graph = viewport.getBranch();
 
     await createCars(graph);
+    const trackNode = buildTrack(OFFSET);
+    graph.appendChild(trackNode);
 
     fudge.Loop.addEventListener(fudge.EVENT.LOOP_FRAME, update);
     fudge.Loop.start();
@@ -32,6 +35,17 @@ namespace Script {
     cars.forEach(car => graph.addChild(car));
 
     console.log(cars[0]);
+  }
+
+  function buildTrack(offset: fudge.Vector2): fudge.Node {
+    track = [
+      [new TileGrass(), new TileStraight(), new TileGrass()],
+      [new TileGrass(), new TileStraight(), new TileGrass()],
+      [new TileGrass(), new TileStraight(), new TileGrass()],
+      [new TileGrass(), new TileStraight(), new TileGrass()]
+    ];
+    const trackBuilder = new TrackBuilder();
+    return trackBuilder.buildTrack(track, offset);
   }
 
   function update(_event: Event): void {

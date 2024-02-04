@@ -44,10 +44,6 @@ namespace Script {
                   
                   this.speed.add(this.acceleration);
                   
-                  if (this.color === PC_CAR_COLOR) {
-                        console.log(this.speed.magnitude / timeDeltaSeconds, this.acceleration.magnitude / timeDeltaSeconds);
-                  }
-                  
                   if (this.speed.magnitude / timeDeltaSeconds > CAR_MAX_SPEED) {
                         this.speed.normalize(CAR_MAX_SPEED * timeDeltaSeconds);
                   }
