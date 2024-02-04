@@ -32,7 +32,7 @@
   },
   "Material|2024-02-03T15:32:59.052Z|96992": {
     "ƒ.Material": {
-      "name": "RoadTurnOuter",
+      "name": "texRoadTurnOuter",
       "idResource": "Material|2024-02-03T15:32:59.052Z|96992",
       "shader": "ShaderLitTextured",
       "coat": {
@@ -57,7 +57,7 @@
   },
   "Material|2024-02-03T15:52:58.090Z|22067": {
     "ƒ.Material": {
-      "name": "RoadTurnInner",
+      "name": "texRoadTurnInner",
       "idResource": "Material|2024-02-03T15:52:58.090Z|22067",
       "shader": "ShaderLitTextured",
       "coat": {

@@ -83,10 +83,8 @@ declare namespace Script {
     }
 }
 declare namespace Script {
-    import fudge = FudgeCore;
     const TILE_WIDTH = 2;
     type Track = Tile[][];
-    const OFFSET: fudge.Vector2;
 }
 declare namespace Script {
     import fudge = FudgeCore;
@@ -106,5 +104,16 @@ declare namespace Script {
     import fudge = FudgeCore;
     interface Tile extends fudge.Node {
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TileTurn extends fudge.Node implements Tile {
+        rotation: number;
+        private rotationTranslationMap;
+        constructor(orientation: "Left" | "Right", rotation: number);
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+        private buildQuad;
+        private rotateTile;
     }
 }

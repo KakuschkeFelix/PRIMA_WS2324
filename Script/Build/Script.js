@@ -55,7 +55,7 @@ var Script;
         viewport.camera = camera.cmp;
         const graph = viewport.getBranch();
         await createCars(graph);
-        const trackNode = buildTrack(Script.OFFSET);
+        const trackNode = buildTrack();
         graph.appendChild(trackNode);
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
@@ -67,13 +67,15 @@ var Script;
         cars.forEach(car => graph.addChild(car));
         console.log(cars[0]);
     }
-    function buildTrack(offset) {
+    function buildTrack() {
         track = [
-            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
-            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
-            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
-            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()]
+            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileTurn("Right", 0), new Script.TileTurn("Right", 270)],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileTurn("Left", 180), new Script.TileTurn("Right", 270)],
+            [new Script.TileGrass(), new Script.TileTurn("Right", 90), new Script.TileStraight(), new Script.TileTurn("Right", 180)],
+            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()]
         ];
+        const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
         return trackBuilder.buildTrack(track, offset);
     }
@@ -298,9 +300,7 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
-    var fudge = FudgeCore;
     Script.TILE_WIDTH = 2;
-    Script.OFFSET = new fudge.Vector2(-1, -1);
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -369,5 +369,72 @@ var Script;
         }
     }
     Script.TileStraight = TileStraight;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TileTurn extends fudge.Node {
+        rotation;
+        rotationTranslationMap = {
+            0: new fudge.Vector3(0, 0, 0),
+            90: new fudge.Vector3(0.5, 0, -0.5),
+            180: new fudge.Vector3(0, 0, -1),
+            270: new fudge.Vector3(-0.5, 0, -0.5)
+        };
+        constructor(orientation, rotation) {
+            const name = "TileStraight";
+            super(name);
+            this.rotation = rotation;
+            if (orientation === "Left") {
+                this.rotation += 270;
+            }
+        }
+        build(position, offset) {
+            position.add(new fudge.Vector3(offset.x, 0, offset.y));
+            position.scale(-1);
+            this.addComponent(new fudge.ComponentTransform());
+            const materialTL = fudge.Project.getResourcesByName("texRoadTurnOuter")[0];
+            const materialTR = fudge.Project.getResourcesByName("texRoadStraight")[0];
+            const materialBL = fudge.Project.getResourcesByName("texRoadStraight")[0];
+            const materialBR = fudge.Project.getResourcesByName("texRoadTurnInner")[0];
+            const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, -0.25, 0), 180);
+            const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, -0.25, 0), 90);
+            const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, -0.25, -1), 180);
+            const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, -0.25, -1), 180);
+            this.appendChild(nodeTL);
+            this.appendChild(nodeTR);
+            this.appendChild(nodeBL);
+            this.appendChild(nodeBR);
+            this.mtxLocal.translate(position);
+            this.rotateTile(this.rotation % 360);
+        }
+        buildQuad(material, position, rotationY) {
+            const mtx = new fudge.Matrix4x4();
+            mtx.translate(position);
+            mtx.rotateX(-90);
+            let node = new fudge.Node(`Quad`);
+            let cmpMesh = new fudge.ComponentMesh();
+            let mesh = new fudge.MeshQuad();
+            cmpMesh.mesh = mesh;
+            cmpMesh.mtxPivot = mtx;
+            node.addComponent(cmpMesh);
+            let cmpMaterial = new fudge.ComponentMaterial(material);
+            cmpMaterial.mtxPivot.rotate(rotationY);
+            node.addComponent(cmpMaterial);
+            return node;
+        }
+        rotateTile(rotation) {
+            // Save the current translation
+            let translation = this.mtxLocal.translation.clone;
+            translation.add(this.rotationTranslationMap[rotation]);
+            // Reset the local matrix
+            this.mtxLocal.set(fudge.Matrix4x4.IDENTITY());
+            // Apply the rotation
+            this.mtxLocal.rotateY(rotation);
+            // Apply the saved translation
+            this.mtxLocal.translation = translation;
+        }
+    }
+    Script.TileTurn = TileTurn;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map

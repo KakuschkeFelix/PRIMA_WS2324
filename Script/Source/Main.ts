@@ -21,7 +21,7 @@ namespace Script {
     const graph = viewport.getBranch();
 
     await createCars(graph);
-    const trackNode = buildTrack(OFFSET);
+    const trackNode = buildTrack();
     graph.appendChild(trackNode);
 
     fudge.Loop.addEventListener(fudge.EVENT.LOOP_FRAME, update);
@@ -37,13 +37,15 @@ namespace Script {
     console.log(cars[0]);
   }
 
-  function buildTrack(offset: fudge.Vector2): fudge.Node {
+  function buildTrack(): fudge.Node {
     track = [
-      [new TileGrass(), new TileStraight(), new TileGrass()],
-      [new TileGrass(), new TileStraight(), new TileGrass()],
-      [new TileGrass(), new TileStraight(), new TileGrass()],
-      [new TileGrass(), new TileStraight(), new TileGrass()]
+      [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
+      [new TileGrass(), new TileTurn("Right", 0), new TileTurn("Right", 270)],
+      [new TileGrass(), new TileStraight(), new TileTurn("Left",180), new TileTurn("Right", 270)],
+      [new TileGrass(), new TileTurn("Right", 90), new TileStraight(), new TileTurn("Right", 180)],
+      [new TileGrass(), new TileGrass(), new TileGrass()]
     ];
+    const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();
     return trackBuilder.buildTrack(track, offset);
   }
