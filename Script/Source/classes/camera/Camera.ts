@@ -29,8 +29,6 @@ namespace Script {
 
             this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
 
-            console.log(cameraPos.toString(), this.cmp.mtxPivot.rotation.toString());
-
             this.cmp.mtxPivot.translation = cameraPos;
         }
       }

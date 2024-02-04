@@ -18,7 +18,7 @@ namespace Script {
 
             update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number): void {
                   const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
-                  // this.rotate(_cameraTranslation, carY);
+                  this.rotate(_cameraTranslation, carY);
                   const nextAction = this.handler.nextAction(this.mtxLocal.translation);
                   this.move(nextAction, timeDeltaSeconds);
                   this.showFrame(this.calculateRotationFrame(carY));
@@ -30,20 +30,23 @@ namespace Script {
                   mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
                   
                   this.acceleration = mtxClone.forward;
+                  this.acceleration.scale(transformation[0] * CAR_ACCERLATION * timeDeltaSeconds);
                   if (transformation[0] !== 0) {
-                        this.acceleration.scale(transformation[0] * CAR_ACCERLATION * timeDeltaSeconds);
                   } else {
-                        this.acceleration.scale(this.speed.magnitude * CAR_ACCERLATION * timeDeltaSeconds);
-                        this.speed.scale(0.99);
+                        this.speed.scale(0.98);
                   }
 
                   this.speed.add(this.acceleration);
+                  
+                  if (this.color === PC_CAR_COLOR) {
+                        console.log(this.speed.toString());
+                  }
                   
                   if (this.speed.magnitude > CAR_MAX_SPEED) {
                         this.speed.normalize(CAR_MAX_SPEED);
                   }
                   
-                  this.mtxLocal.translate(this.speed);
+                  this.mtxLocal.translate(this.speed, false);
             }
 
             calculateRotationFrame(carY: number): number {
@@ -63,7 +66,7 @@ namespace Script {
             rotate(_cameraTranslation: fudge.Vector3, carY: number): void {
                   const distance = fudge.Vector3.DIFFERENCE(this.mtxLocal.translation, _cameraTranslation).magnitude;
                   const carAngle = Math.max(Math.min(-8 * distance + 90, CAR_MAX_ANGLE), CAR_MIN_ANGLE);
-                  this.mtxLocal.rotation = new fudge.Vector3(carAngle, carY / 2, 0);
+                  this.mtxLocal.rotation = new fudge.Vector3(carAngle, carY, 0);
             }
 
             async initializeAnimation(): Promise<void> {

@@ -54,7 +54,6 @@ var Script;
         viewport.camera = camera.cmp;
         const graph = viewport.getBranch();
         await createCars(graph);
-        console.log(viewport.getBranch());
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
     }
@@ -63,6 +62,7 @@ var Script;
         cars = [pcCar, ...Script.NPC_CAR_COLORS.map(color => new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler()))];
         await Promise.all(cars.map(car => car.initializeAnimation()));
         cars.forEach(car => graph.addChild(car));
+        console.log(cars[0]);
     }
     function update(_event) {
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
@@ -103,7 +103,6 @@ var Script;
             cameraPos.z = carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2);
             cameraPos.y = carPos.y + 1;
             this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
-            console.log(cameraPos.toString(), this.cmp.mtxPivot.rotation.toString());
             this.cmp.mtxPivot.translation = cameraPos;
         }
     }
@@ -131,7 +130,7 @@ var Script;
         }
         update(_cameraTranslation, timeDeltaSeconds) {
             const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
-            // this.rotate(_cameraTranslation, carY);
+            this.rotate(_cameraTranslation, carY);
             const nextAction = this.handler.nextAction(this.mtxLocal.translation);
             this.move(nextAction, timeDeltaSeconds);
             this.showFrame(this.calculateRotationFrame(carY));
@@ -141,18 +140,20 @@ var Script;
             const mtxClone = this.mtxLocal.clone;
             mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
             this.acceleration = mtxClone.forward;
+            this.acceleration.scale(transformation[0] * Script.CAR_ACCERLATION * timeDeltaSeconds);
             if (transformation[0] !== 0) {
-                this.acceleration.scale(transformation[0] * Script.CAR_ACCERLATION * timeDeltaSeconds);
             }
             else {
-                this.acceleration.scale(this.speed.magnitude * Script.CAR_ACCERLATION * timeDeltaSeconds);
-                this.speed.scale(0.99);
+                this.speed.scale(0.98);
             }
             this.speed.add(this.acceleration);
+            if (this.color === Script.PC_CAR_COLOR) {
+                console.log(this.speed.toString());
+            }
             if (this.speed.magnitude > Script.CAR_MAX_SPEED) {
                 this.speed.normalize(Script.CAR_MAX_SPEED);
             }
-            this.mtxLocal.translate(this.speed);
+            this.mtxLocal.translate(this.speed, false);
         }
         calculateRotationFrame(carY) {
             const frame = (Script.CAR_CENTER_FRAME + Math.round((-carY - this.rotation) / Script.CAR_FRAME_ANGLE_DIFF)) % (Script.CAR_FRAMES_LEFT + Script.CAR_FRAMES_RIGHT + 1);
@@ -169,7 +170,7 @@ var Script;
         rotate(_cameraTranslation, carY) {
             const distance = fudge.Vector3.DIFFERENCE(this.mtxLocal.translation, _cameraTranslation).magnitude;
             const carAngle = Math.max(Math.min(-8 * distance + 90, Script.CAR_MAX_ANGLE), Script.CAR_MIN_ANGLE);
-            this.mtxLocal.rotation = new fudge.Vector3(carAngle, carY / 2, 0);
+            this.mtxLocal.rotation = new fudge.Vector3(carAngle, carY, 0);
         }
         async initializeAnimation() {
             let _spriteSheet = new fudge.TextureImage();

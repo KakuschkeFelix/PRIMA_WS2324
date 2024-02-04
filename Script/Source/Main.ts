@@ -21,8 +21,6 @@ namespace Script {
 
     await createCars(graph);
 
-    console.log(viewport.getBranch())
-
     fudge.Loop.addEventListener(fudge.EVENT.LOOP_FRAME, update);
     fudge.Loop.start();
   }
@@ -32,6 +30,8 @@ namespace Script {
     cars = [pcCar, ...NPC_CAR_COLORS.map(color => new Car(color, CAR_POSITIONS[color], new AIHandler()))];
     await Promise.all(cars.map(car => car.initializeAnimation()));
     cars.forEach(car => graph.addChild(car));
+
+    console.log(cars[0]);
   }
 
   function update(_event: Event): void {
