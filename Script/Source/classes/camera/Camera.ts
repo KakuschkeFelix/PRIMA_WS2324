@@ -17,15 +17,22 @@ namespace Script {
               this.cmp.mtxPivot.translation = _position;
           }
 
-        public follow(car: Car): void {
+        public follow(car: Car, lerpFactor: number = 0.2): void {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
             const distance = 1.5; // distance from the car
 
             // Calculate the new camera position in a circular path around the car
-            cameraPos.x = carPos.x + distance * Math.cos(car.rotation * Math.PI / 180 - Math.PI / 2);
-            cameraPos.z = carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2);
-            cameraPos.y = carPos.y + 1;
+            const targetPos = new fudge.Vector3(
+                carPos.x + distance * Math.cos(car.rotation * Math.PI / 180 - Math.PI / 2),
+                carPos.y + 1,
+                carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2)
+            );
+
+            // Use lerp to smoothly transition the camera's position
+            cameraPos.x += (targetPos.x - cameraPos.x) * lerpFactor;
+            cameraPos.y += (targetPos.y - cameraPos.y) * lerpFactor;
+            cameraPos.z += (targetPos.z - cameraPos.z) * lerpFactor;
 
             this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
 

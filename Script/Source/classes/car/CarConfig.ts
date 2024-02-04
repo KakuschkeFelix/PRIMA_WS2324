@@ -25,4 +25,5 @@ namespace Script {
       export const CAR_ACCERLATION = 0.5;
       export const ROAD_FRICTION = 0.1;
       export const OFFROAD_FRICTION = 0.25;
+      export const CAR_MIN_SPEED = 0.1;
 }

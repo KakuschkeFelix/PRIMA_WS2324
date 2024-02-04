@@ -94,14 +94,16 @@ var Script;
         set position(_position) {
             this.cmp.mtxPivot.translation = _position;
         }
-        follow(car) {
+        follow(car, lerpFactor = 0.2) {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
             const distance = 1.5; // distance from the car
             // Calculate the new camera position in a circular path around the car
-            cameraPos.x = carPos.x + distance * Math.cos(car.rotation * Math.PI / 180 - Math.PI / 2);
-            cameraPos.z = carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2);
-            cameraPos.y = carPos.y + 1;
+            const targetPos = new fudge.Vector3(carPos.x + distance * Math.cos(car.rotation * Math.PI / 180 - Math.PI / 2), carPos.y + 1, carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2));
+            // Use lerp to smoothly transition the camera's position
+            cameraPos.x += (targetPos.x - cameraPos.x) * lerpFactor;
+            cameraPos.y += (targetPos.y - cameraPos.y) * lerpFactor;
+            cameraPos.z += (targetPos.z - cameraPos.z) * lerpFactor;
             this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
             this.cmp.mtxPivot.translation = cameraPos;
         }
@@ -136,7 +138,10 @@ var Script;
             this.showFrame(this.calculateRotationFrame(carY));
         }
         move(transformation, timeDeltaSeconds) {
-            this.rotation += transformation[1] * 2;
+            // Only allow rotation if the car is moving
+            if (this.speed.magnitude > 0) {
+                this.rotation += transformation[1] * 2;
+            }
             const mtxClone = this.mtxLocal.clone;
             mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
             // Acceleration
@@ -154,6 +159,9 @@ var Script;
             }
             if (this.speed.magnitude / timeDeltaSeconds > Script.CAR_MAX_SPEED) {
                 this.speed.normalize(Script.CAR_MAX_SPEED * timeDeltaSeconds);
+            }
+            if (this.speed.magnitude / timeDeltaSeconds < Script.CAR_MIN_SPEED) {
+                this.speed = fudge.Vector3.ZERO();
             }
             this.speed.scale(1 - Script.ROAD_FRICTION);
             this.mtxLocal.translate(this.speed, false);
@@ -206,6 +214,7 @@ var Script;
     Script.CAR_ACCERLATION = 0.5;
     Script.ROAD_FRICTION = 0.1;
     Script.OFFROAD_FRICTION = 0.25;
+    Script.CAR_MIN_SPEED = 0.1;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

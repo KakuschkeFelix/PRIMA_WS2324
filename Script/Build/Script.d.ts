@@ -16,7 +16,7 @@ declare namespace Script {
         constructor(position: fudge.Vector3, viewport: fudge.Viewport);
         get position(): fudge.Vector3;
         set position(_position: fudge.Vector3);
-        follow(car: Car): void;
+        follow(car: Car, lerpFactor?: number): void;
     }
 }
 declare namespace Script {
@@ -55,6 +55,7 @@ declare namespace Script {
     const CAR_ACCERLATION = 0.5;
     const ROAD_FRICTION = 0.1;
     const OFFROAD_FRICTION = 0.25;
+    const CAR_MIN_SPEED = 0.1;
 }
 declare namespace Script {
     import fudge = FudgeCore;

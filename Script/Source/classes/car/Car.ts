@@ -25,7 +25,11 @@ namespace Script {
             }
 
             move(transformation: [number, number], timeDeltaSeconds: number): void {
-                  this.rotation += transformation[1] * 2;
+                  // Only allow rotation if the car is moving
+                  if (this.speed.magnitude > 0) {
+                        this.rotation += transformation[1] * 2;
+                  }
+                  
                   const mtxClone = this.mtxLocal.clone;
                   mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
                   
@@ -47,6 +51,11 @@ namespace Script {
                   if (this.speed.magnitude / timeDeltaSeconds > CAR_MAX_SPEED) {
                         this.speed.normalize(CAR_MAX_SPEED * timeDeltaSeconds);
                   }
+
+                  if (this.speed.magnitude / timeDeltaSeconds < CAR_MIN_SPEED) {
+                        this.speed = fudge.Vector3.ZERO();
+                  }
+
                   this.speed.scale(1 - ROAD_FRICTION);
                   
                   this.mtxLocal.translate(this.speed, false);
