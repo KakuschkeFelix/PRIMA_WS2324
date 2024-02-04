@@ -139,20 +139,23 @@ var Script;
             this.rotation += transformation[1] * 2;
             const mtxClone = this.mtxLocal.clone;
             mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
-            this.acceleration = mtxClone.forward;
-            this.acceleration.scale(transformation[0] * Script.CAR_ACCERLATION * timeDeltaSeconds);
+            // Acceleration
             if (transformation[0] !== 0) {
+                this.acceleration = mtxClone.forward;
+                this.acceleration.scale(transformation[0] * Script.CAR_ACCERLATION * timeDeltaSeconds);
             }
             else {
-                this.speed.scale(0.98);
+                // Coasting
+                this.acceleration = new fudge.Vector3(0, 0, 0);
             }
             this.speed.add(this.acceleration);
             if (this.color === Script.PC_CAR_COLOR) {
-                console.log(this.speed.toString());
+                console.log(this.speed.magnitude / timeDeltaSeconds, this.acceleration.magnitude / timeDeltaSeconds);
             }
-            if (this.speed.magnitude > Script.CAR_MAX_SPEED) {
-                this.speed.normalize(Script.CAR_MAX_SPEED);
+            if (this.speed.magnitude / timeDeltaSeconds > Script.CAR_MAX_SPEED) {
+                this.speed.normalize(Script.CAR_MAX_SPEED * timeDeltaSeconds);
             }
+            this.speed.scale(1 - Script.ROAD_FRICTION);
             this.mtxLocal.translate(this.speed, false);
         }
         calculateRotationFrame(carY) {
@@ -199,8 +202,10 @@ var Script;
     };
     Script.CAR_MIN_ANGLE = 10; // 10
     Script.CAR_MAX_ANGLE = 70; // 70
-    Script.CAR_MAX_SPEED = 0.25;
-    Script.CAR_ACCERLATION = 0.1;
+    Script.CAR_MAX_SPEED = 5;
+    Script.CAR_ACCERLATION = 0.5;
+    Script.ROAD_FRICTION = 0.1;
+    Script.OFFROAD_FRICTION = 0.25;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

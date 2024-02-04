@@ -21,14 +21,8 @@ namespace Script {
       export const CAR_MIN_ANGLE = 10; // 10
       export const CAR_MAX_ANGLE = 70; // 70
 
-      export const CAR_MAX_SPEED = 0.25;
-      export const CAR_ACCERLATION = 0.1;
-
-      export interface CarBase {
-            speed: number;
-            rotation: number;
-            showAnimation(_cameraRotation: number): void;
-            calculateRotation(_cameraRotation: number): number;
-            update(_frame: number): void;
-      }
+      export const CAR_MAX_SPEED = 5;
+      export const CAR_ACCERLATION = 0.5;
+      export const ROAD_FRICTION = 0.1;
+      export const OFFROAD_FRICTION = 0.25;
 }

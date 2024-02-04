@@ -51,15 +51,10 @@ declare namespace Script {
     const CAR_POSITIONS: Record<CarColor, fudge.Vector2>;
     const CAR_MIN_ANGLE = 10;
     const CAR_MAX_ANGLE = 70;
-    const CAR_MAX_SPEED = 0.25;
-    const CAR_ACCERLATION = 0.1;
-    interface CarBase {
-        speed: number;
-        rotation: number;
-        showAnimation(_cameraRotation: number): void;
-        calculateRotation(_cameraRotation: number): number;
-        update(_frame: number): void;
-    }
+    const CAR_MAX_SPEED = 5;
+    const CAR_ACCERLATION = 0.5;
+    const ROAD_FRICTION = 0.1;
+    const OFFROAD_FRICTION = 0.25;
 }
 declare namespace Script {
     import fudge = FudgeCore;
