@@ -45,35 +45,59 @@ var Script;
     let cars = [];
     let pcCar;
     let track;
+    let client;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
     async function start(_event) {
         viewport = _event.detail;
-        const cameraPos = Script.CAR_POSITIONS[Script.PC_CAR_COLOR].toVector3();
+        const graph = viewport.getBranch();
+        const { node: trackNode, offset: trackOffset } = buildTrack();
+        graph.appendChild(trackNode);
+        client = new Script.NetworkClient();
+        await client.connect();
+        const others = await client.getOtherCars();
+        let color;
+        if (others.length > 0) {
+            await createPCCar(graph, track, trackOffset, false);
+            await createNPCCar(graph, track, trackOffset, false);
+            color = Script.PLAYER_TWO_COLOR;
+            client.pingPlayerOne(others[0]);
+            const pos = Script.CAR_POSITIONS[Script.PLAYER_ONE_COLOR];
+            const rot = 0;
+            client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
+            client.lastRotation = rot;
+        }
+        else {
+            await createPCCar(graph, track, trackOffset, true);
+            await createNPCCar(graph, track, trackOffset, true);
+            color = Script.PLAYER_ONE_COLOR;
+            const pos = Script.CAR_POSITIONS[Script.PLAYER_TWO_COLOR];
+            const rot = 0;
+            client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
+            client.lastRotation = rot;
+        }
+        const cameraPos = Script.CAR_POSITIONS[color].toVector3();
         cameraPos.z = cameraPos.y - 1.5;
         cameraPos.y = 1;
         camera = new Script.Camera(cameraPos, viewport);
         viewport.camera = camera.cmp;
-        const graph = viewport.getBranch();
-        const { node: trackNode, offset: trackOffset } = buildTrack();
-        await createCars(graph, track, trackOffset);
-        graph.appendChild(trackNode);
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
     }
-    async function createCars(graph, track, offset) {
-        pcCar = new Script.Car(Script.PC_CAR_COLOR, Script.CAR_POSITIONS[Script.PC_CAR_COLOR], new Script.KeyboardHandler(), new Script.FrictionHandler(track, offset));
-        cars = [pcCar, ...Script.NPC_CAR_COLORS.map(color => new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.FrictionHandler(track, offset)))];
-        await Promise.all(cars.map(car => car.initializeAnimation()));
-        cars.forEach(car => graph.addChild(car));
+    async function createPCCar(graph, track, offset, playerOne) {
+        const color = playerOne ? Script.PLAYER_ONE_COLOR : Script.PLAYER_TWO_COLOR;
+        pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), new Script.FrictionHandler(track, offset), client);
+        await pcCar.initializeAnimation();
+        graph.addChild(pcCar);
+        cars.push(pcCar);
+    }
+    async function createNPCCar(graph, track, offset, playerOne) {
+        const color = playerOne ? Script.PLAYER_TWO_COLOR : Script.PLAYER_ONE_COLOR;
+        const car = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.FrictionHandler(track, offset), client);
+        await car.initializeAnimation();
+        graph.addChild(car);
+        cars.push(car);
     }
     function buildTrack() {
-        // track = [
-        //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
-        //   [new TileGrass(), new TileTurn("Right", 0), new TileStraight("Horizontal"), new TileTurn("Right", 270), new TileGrass()],
-        //   [new TileGrass(), new TileStraight(), new TileGrass(), new TileStraight(), new TileGrass()],
-        //   [new TileGrass(), new TileTurn("Right", 90), new TileStraight("Horizontal"), new TileTurn("Right", 180), new TileGrass()],
-        //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()]
-        // ];
         track = [
             [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
             [new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass()],
@@ -88,17 +112,18 @@ var Script;
         const trackBuilder = new Script.TrackBuilder();
         return { node: trackBuilder.buildTrack(track, offset), offset };
     }
-    function update(_event) {
+    async function update(_event) {
+        let allPlayersReady = false;
+        if (!allPlayersReady) {
+            if (client.peers.size === 1) {
+                allPlayersReady = true;
+            }
+        }
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
         cars.forEach(car => {
-            car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds);
+            car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, !allPlayersReady, car.color !== pcCar.color);
         });
         camera.follow(pcCar);
-        // FOR ORBIT CAMERA
-        // const cameraPos = CAR_POSITIONS[PC_CAR_COLOR].toVector3();
-        // cameraPos.z = cameraPos.y - 1.5;
-        // cameraPos.y = 1;
-        // cars.forEach(car => car.update(cameraPos));
         viewport.draw();
     }
 })(Script || (Script = {}));
@@ -142,25 +167,33 @@ var Script;
         color;
         handler;
         frictionHandler;
+        client;
         speed = fudge.Vector3.ZERO();
         acceleration = fudge.Vector3.ZERO();
         position;
         rotation;
-        constructor(color, position, handler, frictionHandler) {
+        constructor(color, position, handler, frictionHandler, client) {
             super(color);
             this.color = color;
             this.handler = handler;
             this.frictionHandler = frictionHandler;
+            this.client = client;
             this.addComponent(new fudge.ComponentTransform());
             this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
             this.mtxLocal.scale(fudge.Vector3.ONE(0.5));
             this.rotation = 0;
         }
-        update(_cameraTranslation, timeDeltaSeconds) {
+        update(_cameraTranslation, timeDeltaSeconds, idle = false, otherPlayer = false) {
             const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
             this.rotate(_cameraTranslation, carY);
-            const nextAction = this.handler.nextAction(this.mtxLocal.translation);
-            this.move(nextAction, timeDeltaSeconds);
+            const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
+            if (!idle && !otherPlayer) {
+                this.move(nextAction, timeDeltaSeconds);
+            }
+            if (otherPlayer) {
+                this.mtxLocal.translation = this.client.lastPosition;
+                this.rotation = this.client.lastRotation;
+            }
             this.showFrame(this.calculateRotationFrame(carY));
         }
         move(transformation, timeDeltaSeconds) {
@@ -187,9 +220,6 @@ var Script;
                 this.speed = fudge.Vector3.ZERO();
             }
             const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
-            if (this.color === Script.PC_CAR_COLOR) {
-                console.log(Script.CAR_ACCERLATION, friction, Script.CAR_ACCERLATION * friction, 1 - (Script.CAR_ACCERLATION * friction));
-            }
             this.speed.scale(friction);
             this.mtxLocal.translate(this.speed, false);
         }
@@ -225,8 +255,8 @@ var Script;
 var Script;
 (function (Script) {
     var fudge = FudgeCore;
-    Script.NPC_CAR_COLORS = ["carRed"];
-    Script.PC_CAR_COLOR = "carBlue";
+    Script.PLAYER_ONE_COLOR = "carRed";
+    Script.PLAYER_TWO_COLOR = "carBlue";
     Script.CAR_CENTER_FRAME = 6;
     Script.CAR_FRAMES_LEFT = 6;
     Script.CAR_FRAMES_RIGHT = 9;
@@ -245,19 +275,8 @@ var Script;
 var Script;
 (function (Script) {
     class AIHandler {
-        nextAction(position) {
-            let transformation = [0, 0];
-            // if (position.x < 0) {
-            //       transformation[0] = 1;
-            // } else {
-            //       transformation[0] = -1;
-            // }
-            // if (position.y < 0) {
-            //       transformation[1] = 1;
-            // } else {
-            //       transformation[1] = -1;
-            // }
-            return transformation;
+        nextAction(_position, _rotation, _client) {
+            return [0, 0];
         }
     }
     Script.AIHandler = AIHandler;
@@ -266,7 +285,7 @@ var Script;
 (function (Script) {
     var fudge = FudgeCore;
     class KeyboardHandler {
-        nextAction(_position) {
+        nextAction(_position, _rotation, _client) {
             let transformation = [0, 0];
             if (fudge.Keyboard.isPressedOne([fudge.KEYBOARD_CODE.W, fudge.KEYBOARD_CODE.ARROW_UP])) {
                 transformation[0] = 1;
@@ -280,10 +299,121 @@ var Script;
             if (fudge.Keyboard.isPressedOne([fudge.KEYBOARD_CODE.D, fudge.KEYBOARD_CODE.ARROW_RIGHT])) {
                 transformation[1] = 1;
             }
+            _client.sendPosition(_position);
+            _client.sendRotation(_rotation);
             return transformation;
         }
     }
     Script.KeyboardHandler = KeyboardHandler;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudgeNet = FudgeNet;
+    var fudge = FudgeCore;
+    class NetworkClient {
+        client;
+        id;
+        peers = new Set();
+        lastPosition;
+        lastRotation;
+        constructor() {
+            this.client = new fudgeNet.FudgeClient();
+        }
+        async connect() {
+            this.client.connectToServer("ws://localhost:4000");
+            await this.makeNetworkCall(5000, 100, () => {
+                if (this.client.id !== undefined) {
+                    this.id = this.client.id;
+                    return true;
+                }
+                return undefined;
+            });
+            this.client.addEventListener(fudgeNet.EVENT.MESSAGE_RECEIVED, (message) => this.handleMessage(message));
+        }
+        async getOtherCars() {
+            return await this.makeNetworkCall(5000, 100, () => {
+                const clients = Object.keys(this.client.clientsInfoFromServer);
+                if (clients.includes(this.id)) {
+                    const others = clients.filter(client => client !== this.id);
+                    this.peers = new Set(others);
+                    return others;
+                }
+                return undefined;
+            });
+        }
+        async pingPlayerOne(target) {
+            this.client.dispatch({
+                route: fudgeNet.ROUTE.VIA_SERVER,
+                content: {
+                    ping: "pong",
+                },
+                idSource: this.id,
+                idTarget: target,
+            });
+        }
+        async makeNetworkCall(maxTimeout, timeout, handler) {
+            const maxAttempts = maxTimeout / timeout;
+            let attempts = 0;
+            return new Promise((resolve, reject) => {
+                const intervalId = setInterval(() => {
+                    attempts++;
+                    const result = handler();
+                    if (result !== undefined) {
+                        clearInterval(intervalId);
+                        resolve(result);
+                    }
+                    else if (attempts >= maxAttempts) {
+                        clearInterval(intervalId);
+                        reject(new Error('Unable to get result within 5 seconds'));
+                    }
+                }, timeout);
+            });
+        }
+        async handleMessage(event) {
+            const message = JSON.parse(event.data);
+            if (message.idTarget === this.id) {
+                if (message.idSource) {
+                    this.peers.add(message.idSource);
+                }
+                if (message.content.position) {
+                    const pos = message.content.position;
+                    this.lastPosition = new fudge.Vector3(pos.x, pos.y, pos.z);
+                }
+                if (message.content.rotation) {
+                    this.lastRotation = message.content.rotation;
+                }
+            }
+        }
+        async sendPosition(position) {
+            if (![...this.peers][0])
+                return;
+            this.client.dispatch({
+                route: fudgeNet.ROUTE.VIA_SERVER,
+                content: {
+                    position: {
+                        x: position.x,
+                        y: position.y,
+                        z: position.z,
+                    },
+                },
+                idSource: this.id,
+                idTarget: [...this.peers][0],
+            });
+        }
+        async sendRotation(rotation) {
+            if (![...this.peers][0])
+                return;
+            this.client.dispatch({
+                route: fudgeNet.ROUTE.VIA_SERVER,
+                content: {
+                    rotation,
+                },
+                idSource: this.id,
+                idTarget: [...this.peers][0],
+            });
+        }
+    }
+    Script.NetworkClient = NetworkClient;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

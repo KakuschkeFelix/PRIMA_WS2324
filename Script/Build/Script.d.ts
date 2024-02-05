@@ -26,12 +26,13 @@ declare namespace Script {
         color: CarColor;
         handler: HandlerBase;
         private frictionHandler;
+        private client;
         speed: fudge.Vector3;
         acceleration: fudge.Vector3;
         position: fudge.Vector2;
         rotation: number;
-        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, frictionHandler: FrictionHandler);
-        update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number): void;
+        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, frictionHandler: FrictionHandler, client: NetworkClient);
+        update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number, idle?: boolean, otherPlayer?: boolean): void;
         move(transformation: [number, number], timeDeltaSeconds: number): void;
         calculateRotationFrame(carY: number): number;
         calculateRotationRelativeToCamera(_cameraTranslation: fudge.Vector3): number;
@@ -41,10 +42,9 @@ declare namespace Script {
 }
 declare namespace Script {
     import fudge = FudgeCore;
-    const NPC_CAR_COLORS: readonly ["carRed"];
-    type NPCCarColor = typeof NPC_CAR_COLORS[number];
-    const PC_CAR_COLOR = "carBlue";
-    type CarColor = NPCCarColor | typeof PC_CAR_COLOR;
+    const PLAYER_ONE_COLOR: "carRed";
+    const PLAYER_TWO_COLOR: "carBlue";
+    type CarColor = typeof PLAYER_ONE_COLOR | typeof PLAYER_TWO_COLOR;
     const CAR_CENTER_FRAME = 6;
     const CAR_FRAMES_LEFT = 6;
     const CAR_FRAMES_RIGHT = 9;
@@ -60,19 +60,38 @@ declare namespace Script {
 declare namespace Script {
     import fudge = FudgeCore;
     class AIHandler implements HandlerBase {
-        nextAction(position: fudge.Vector3): [number, number];
+        nextAction(_position: fudge.Vector3, _rotation: number, _client: NetworkClient): [number, number];
     }
 }
 declare namespace Script {
     import fudge = FudgeCore;
     interface HandlerBase {
-        nextAction(_position: fudge.Vector3): [number, number];
+        nextAction(_position: fudge.Vector3, _rotation: number, _client: NetworkClient): [number, number];
     }
 }
 declare namespace Script {
     import fudge = FudgeCore;
     class KeyboardHandler implements HandlerBase {
-        nextAction(_position: fudge.Vector3): [number, number];
+        nextAction(_position: fudge.Vector3, _rotation: number, _client: NetworkClient): [number, number];
+    }
+}
+declare namespace Script {
+    import fudgeNet = FudgeNet;
+    import fudge = FudgeCore;
+    class NetworkClient {
+        client: fudgeNet.FudgeClient;
+        id: string;
+        peers: Set<string>;
+        lastPosition: fudge.Vector3;
+        lastRotation: number;
+        constructor();
+        connect(): Promise<void>;
+        getOtherCars(): Promise<string[]>;
+        pingPlayerOne(target: string): Promise<void>;
+        private makeNetworkCall;
+        private handleMessage;
+        sendPosition(position: fudge.Vector3): Promise<void>;
+        sendRotation(rotation: number): Promise<void>;
     }
 }
 declare namespace Script {

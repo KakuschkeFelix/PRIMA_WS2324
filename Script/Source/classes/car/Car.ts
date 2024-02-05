@@ -8,7 +8,7 @@ namespace Script {
             position: fudge.Vector2;
             rotation: number;
 
-            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private frictionHandler: FrictionHandler) {
+            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private frictionHandler: FrictionHandler, private client: NetworkClient) {
                   super(color);
                   this.addComponent(new fudge.ComponentTransform());
                   this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
@@ -16,11 +16,17 @@ namespace Script {
                   this.rotation = 0;
             }
 
-            update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number): void {
+            update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number, idle = false, otherPlayer = false): void {
                   const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
                   this.rotate(_cameraTranslation, carY);
-                  const nextAction = this.handler.nextAction(this.mtxLocal.translation);
-                  this.move(nextAction, timeDeltaSeconds);
+                  const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
+                  if (!idle && !otherPlayer) {
+                        this.move(nextAction, timeDeltaSeconds);
+                  }
+                  if (otherPlayer) {
+                        this.mtxLocal.translation = this.client.lastPosition;
+                        this.rotation = this.client.lastRotation;
+                  }
                   this.showFrame(this.calculateRotationFrame(carY));
             }
 
@@ -54,9 +60,6 @@ namespace Script {
 
                   const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
 
-                  if (this.color === PC_CAR_COLOR) {
-                        console.log(CAR_ACCERLATION, friction, CAR_ACCERLATION * friction, 1 - (CAR_ACCERLATION * friction));
-                  }
                   this.speed.scale(friction);
                   
                   this.mtxLocal.translate(this.speed, false);

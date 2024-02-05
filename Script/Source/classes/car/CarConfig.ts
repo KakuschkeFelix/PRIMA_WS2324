@@ -1,12 +1,10 @@
 namespace Script {
       import fudge = FudgeCore;
-      
-      export const NPC_CAR_COLORS = ["carRed"] as const;
-      export type NPCCarColor = typeof NPC_CAR_COLORS[number];
 
-      export const PC_CAR_COLOR = "carBlue";
+      export const PLAYER_ONE_COLOR = "carRed" as const;
+      export const PLAYER_TWO_COLOR = "carBlue" as const;
 
-      export type CarColor = NPCCarColor | typeof PC_CAR_COLOR;
+      export type CarColor = typeof PLAYER_ONE_COLOR | typeof PLAYER_TWO_COLOR;
 
       export const CAR_CENTER_FRAME = 6;
       export const CAR_FRAMES_LEFT = 6;
