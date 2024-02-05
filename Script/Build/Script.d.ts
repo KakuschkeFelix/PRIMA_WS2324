@@ -52,11 +52,10 @@ declare namespace Script {
     const CAR_POSITIONS: Record<CarColor, fudge.Vector2>;
     const CAR_MIN_ANGLE = 10;
     const CAR_MAX_ANGLE = 70;
-    const CAR_MAX_SPEED = 5;
-    const CAR_ACCERLATION = 0.5;
-    const ROAD_FRICTION = 0.1;
-    const OFFROAD_FRICTION = 0.25;
+    const CAR_MAX_SPEED = 20;
+    const CAR_ACCERLATION = 0.2;
     const CAR_MIN_SPEED = 0.1;
+    const CAR_TURN_SPEED = 200;
 }
 declare namespace Script {
     import fudge = FudgeCore;
@@ -125,13 +124,20 @@ declare namespace Script {
 }
 declare namespace Script {
     import fudge = FudgeCore;
-    class TileTurn extends fudge.Node implements Tile {
-        rotation: number;
+    type Side = "Left" | "Right" | "Top" | "Bottom";
+    export class TileTurn extends fudge.Node implements Tile {
         private rotationTranslationMap;
-        constructor(orientation: "Left" | "Right", rotation: number);
+        static sideRotationMap: {
+            [key: string]: {
+                [key: string]: number;
+            };
+        };
+        private rotation;
+        constructor(from: Side, to: Side);
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
         private buildQuad;
         private rotateTile;
         friction(): number;
     }
+    export {};
 }

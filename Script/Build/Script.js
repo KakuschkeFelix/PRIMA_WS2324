@@ -67,12 +67,22 @@ var Script;
         cars.forEach(car => graph.addChild(car));
     }
     function buildTrack() {
+        // track = [
+        //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
+        //   [new TileGrass(), new TileTurn("Right", 0), new TileStraight("Horizontal"), new TileTurn("Right", 270), new TileGrass()],
+        //   [new TileGrass(), new TileStraight(), new TileGrass(), new TileStraight(), new TileGrass()],
+        //   [new TileGrass(), new TileTurn("Right", 90), new TileStraight("Horizontal"), new TileTurn("Right", 180), new TileGrass()],
+        //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()]
+        // ];
         track = [
-            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
-            [new Script.TileGrass(), new Script.TileTurn("Right", 0), new Script.TileTurn("Right", 270)],
-            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileTurn("Left", 180), new Script.TileTurn("Right", 270)],
-            [new Script.TileGrass(), new Script.TileTurn("Right", 90), new Script.TileStraight("Horizontal"), new Script.TileTurn("Right", 180)],
-            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()]
+            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Top", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Top"), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Top", "Right"), new Script.TileTurn("Left", "Bottom")],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileStraight()],
+            [new Script.TileGrass(), new Script.TileStraight(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Right", "Bottom"), new Script.TileTurn("Top", "Left")],
+            [new Script.TileGrass(), new Script.TileTurn("Right", "Top"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Top", "Left"), new Script.TileGrass()],
+            [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
         ];
         const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
@@ -108,7 +118,7 @@ var Script;
         set position(_position) {
             this.cmp.mtxPivot.translation = _position;
         }
-        follow(car, lerpFactor = 0.2) {
+        follow(car, lerpFactor = 0.1) {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
             const distance = 1.5; // distance from the car
@@ -156,7 +166,7 @@ var Script;
         move(transformation, timeDeltaSeconds) {
             // Only allow rotation if the car is moving
             if (this.speed.magnitude > 0) {
-                this.rotation += transformation[1] * 2;
+                this.rotation += transformation[1] * Script.CAR_TURN_SPEED * timeDeltaSeconds;
             }
             const mtxClone = this.mtxLocal.clone;
             mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
@@ -176,7 +186,11 @@ var Script;
             if (this.speed.magnitude / timeDeltaSeconds < Script.CAR_MIN_SPEED) {
                 this.speed = fudge.Vector3.ZERO();
             }
-            this.speed.scale(this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z)));
+            const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
+            if (this.color === Script.PC_CAR_COLOR) {
+                console.log(Script.CAR_ACCERLATION, friction, Script.CAR_ACCERLATION * friction, 1 - (Script.CAR_ACCERLATION * friction));
+            }
+            this.speed.scale(friction);
             this.mtxLocal.translate(this.speed, false);
         }
         calculateRotationFrame(carY) {
@@ -223,11 +237,10 @@ var Script;
     };
     Script.CAR_MIN_ANGLE = 10; // 10
     Script.CAR_MAX_ANGLE = 70; // 70
-    Script.CAR_MAX_SPEED = 5;
-    Script.CAR_ACCERLATION = 0.5;
-    Script.ROAD_FRICTION = 0.1;
-    Script.OFFROAD_FRICTION = 0.25;
+    Script.CAR_MAX_SPEED = 20;
+    Script.CAR_ACCERLATION = 0.2;
     Script.CAR_MIN_SPEED = 0.1;
+    Script.CAR_TURN_SPEED = 200;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -360,7 +373,7 @@ var Script;
             this.mtxLocal.translate(position);
         }
         friction() {
-            return 0.8;
+            return 0.92;
         }
     }
     Script.TileGrass = TileGrass;
@@ -412,7 +425,7 @@ var Script;
             this.mtxLocal.translation = translation;
         }
         friction() {
-            return 0.9;
+            return 0.975;
         }
     }
     Script.TileStraight = TileStraight;
@@ -421,34 +434,53 @@ var Script;
 (function (Script) {
     var fudge = FudgeCore;
     class TileTurn extends fudge.Node {
-        rotation;
         rotationTranslationMap = {
             0: new fudge.Vector3(0, 0, 0),
             90: new fudge.Vector3(0.5, 0, -0.5),
             180: new fudge.Vector3(0, 0, -1),
             270: new fudge.Vector3(-0.5, 0, -0.5)
         };
-        constructor(orientation, rotation) {
-            const name = `TileTurn_${orientation}_${rotation}`;
+        static sideRotationMap = {
+            "Left": {
+                "Top": 180,
+                "Bottom": 270
+            },
+            "Right": {
+                "Top": 90,
+                "Bottom": 0
+            },
+            "Top": {
+                "Left": 180,
+                "Right": 90
+            },
+            "Bottom": {
+                "Left": 270,
+                "Right": 0
+            }
+        };
+        rotation;
+        constructor(from, to) {
+            const rotation = TileTurn.sideRotationMap[from][to];
+            const name = `TileTurn_${rotation}`;
             super(name);
             this.rotation = rotation;
-            if (orientation === "Left") {
-                this.rotation += 270;
-            }
         }
         build(position, offset) {
             position.add(new fudge.Vector3(offset.x, 0, offset.y));
             position.scale(-1);
             this.addComponent(new fudge.ComponentTransform());
             const materialTL = fudge.Project.getResourcesByName("texRoadTurnOuter")[0];
+            const materialGrassTL = fudge.Project.getResourcesByName("texGrass")[0];
             const materialTR = fudge.Project.getResourcesByName("texRoadStraight")[0];
             const materialBL = fudge.Project.getResourcesByName("texRoadStraight")[0];
             const materialBR = fudge.Project.getResourcesByName("texRoadTurnInner")[0];
             const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, -0.25, 0), 180);
+            const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.251, 0), 180);
             const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, -0.25, 0), 90);
             const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, -0.25, -1), 180);
             const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, -0.25, -1), 180);
             this.appendChild(nodeTL);
+            this.appendChild(nodeGrassTL);
             this.appendChild(nodeTR);
             this.appendChild(nodeBL);
             this.appendChild(nodeBR);
@@ -478,7 +510,7 @@ var Script;
             this.mtxLocal.translation = translation;
         }
         friction() {
-            return 0.9;
+            return 0.975;
         }
     }
     Script.TileTurn = TileTurn;

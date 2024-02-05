@@ -36,12 +36,22 @@ namespace Script {
   }
 
   function buildTrack(): {node: fudge.Node, offset: fudge.Vector2} {
+    // track = [
+    //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
+    //   [new TileGrass(), new TileTurn("Right", 0), new TileStraight("Horizontal"), new TileTurn("Right", 270), new TileGrass()],
+    //   [new TileGrass(), new TileStraight(), new TileGrass(), new TileStraight(), new TileGrass()],
+    //   [new TileGrass(), new TileTurn("Right", 90), new TileStraight("Horizontal"), new TileTurn("Right", 180), new TileGrass()],
+    //   [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()]
+    // ];
     track = [
-      [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
-      [new TileGrass(), new TileTurn("Right", 0), new TileTurn("Right", 270)],
-      [new TileGrass(), new TileStraight(), new TileTurn("Left",180), new TileTurn("Right", 270)],
-      [new TileGrass(), new TileTurn("Right", 90), new TileStraight("Horizontal"), new TileTurn("Right", 180)],
-      [new TileGrass(), new TileGrass(), new TileGrass()]
+      [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
+      [new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass(), new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass()],
+      [new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileStraight(), new TileGrass()],
+      [new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileGrass(), new TileTurn("Top", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Top"), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileTurn("Top", "Right"), new TileTurn("Left", "Bottom")],
+      [new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileStraight()],
+      [new TileGrass(), new TileStraight(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileTurn("Right", "Bottom"), new TileTurn("Top", "Left")],
+      [new TileGrass(), new TileTurn("Right", "Top"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Top", "Left"), new TileGrass()],
+      [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
     ];
     const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();

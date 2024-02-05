@@ -46,7 +46,7 @@ namespace Script {
             }
 
             friction(): number {
-                  return 0.9;
+                  return 0.975;
             }
       }
 }

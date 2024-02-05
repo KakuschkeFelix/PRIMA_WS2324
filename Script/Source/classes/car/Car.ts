@@ -27,7 +27,7 @@ namespace Script {
             move(transformation: [number, number], timeDeltaSeconds: number): void {
                   // Only allow rotation if the car is moving
                   if (this.speed.magnitude > 0) {
-                        this.rotation += transformation[1] * 2;
+                        this.rotation += transformation[1] * CAR_TURN_SPEED * timeDeltaSeconds;
                   }
                   
                   const mtxClone = this.mtxLocal.clone;
@@ -52,7 +52,12 @@ namespace Script {
                         this.speed = fudge.Vector3.ZERO();
                   }
 
-                  this.speed.scale(this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z)));
+                  const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
+
+                  if (this.color === PC_CAR_COLOR) {
+                        console.log(CAR_ACCERLATION, friction, CAR_ACCERLATION * friction, 1 - (CAR_ACCERLATION * friction));
+                  }
+                  this.speed.scale(friction);
                   
                   this.mtxLocal.translate(this.speed, false);
             }

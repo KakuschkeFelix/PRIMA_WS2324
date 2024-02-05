@@ -1,6 +1,8 @@
 namespace Script {
       import fudge = FudgeCore;
 
+      type Side = "Left" | "Right" | "Top" | "Bottom";
+
       export class TileTurn extends fudge.Node implements Tile {
             private rotationTranslationMap = {
                   0: new fudge.Vector3(0, 0, 0),
@@ -9,12 +11,33 @@ namespace Script {
                   270: new fudge.Vector3(-0.5, 0, -0.5)
             } as { [key: number]: fudge.Vector3 };
 
-            constructor(orientation: "Left" | "Right", public rotation: number) {
-                  const name = `TileTurn_${orientation}_${rotation}`;
-                  super(name);
-                  if (orientation === "Left") {
-                        this.rotation += 270;
+
+            static sideRotationMap = {
+                  "Left": {
+                        "Top": 180,
+                        "Bottom": 270
+                  },
+                  "Right": {
+                        "Top": 90,
+                        "Bottom": 0
+                  },
+                  "Top": {
+                        "Left": 180,
+                        "Right": 90
+                  },
+                  "Bottom": {
+                        "Left": 270,
+                        "Right": 0
                   }
+            } as { [key: string]: { [key: string]: number } };
+
+            private rotation: number;
+
+            constructor(from: Side, to: Side) {
+                  const rotation = TileTurn.sideRotationMap[from][to];
+                  const name = `TileTurn_${rotation}`;
+                  super(name);
+                  this.rotation = rotation;
             }
 
             build(position: fudge.Vector3, offset: fudge.Vector2): void {
@@ -22,14 +45,17 @@ namespace Script {
                   position.scale(-1);
                   this.addComponent(new fudge.ComponentTransform());
                   const materialTL = fudge.Project.getResourcesByName("texRoadTurnOuter")[0] as fudge.Material;
+                  const materialGrassTL = fudge.Project.getResourcesByName("texGrass")[0] as fudge.Material;
                   const materialTR = fudge.Project.getResourcesByName("texRoadStraight")[0] as fudge.Material;
                   const materialBL = fudge.Project.getResourcesByName("texRoadStraight")[0] as fudge.Material;
                   const materialBR = fudge.Project.getResourcesByName("texRoadTurnInner")[0] as fudge.Material;
                   const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, -0.25, 0), 180);
+                  const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.251, 0), 180);
                   const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, -0.25, 0), 90);
                   const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, -0.25, -1), 180);
                   const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, -0.25, -1), 180);
                   this.appendChild(nodeTL);
+                  this.appendChild(nodeGrassTL);
                   this.appendChild(nodeTR);
                   this.appendChild(nodeBL);
                   this.appendChild(nodeBR);
@@ -62,7 +88,7 @@ namespace Script {
             }
 
             friction(): number {
-                  return 0.9;
+                  return 0.975;
             }
       }
 }
