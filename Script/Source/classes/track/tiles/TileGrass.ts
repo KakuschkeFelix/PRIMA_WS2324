@@ -27,5 +27,9 @@ namespace Script {
                   this.appendChild(node);
                   this.mtxLocal.translate(position);
             }
+
+            friction(): number {
+                  return 0.8;
+            }
       }
 }

@@ -10,7 +10,7 @@ namespace Script {
             } as { [key: number]: fudge.Vector3 };
 
             constructor(orientation: "Left" | "Right", public rotation: number) {
-                  const name = "TileStraight";
+                  const name = `TileTurn_${orientation}_${rotation}`;
                   super(name);
                   if (orientation === "Left") {
                         this.rotation += 270;
@@ -54,18 +54,15 @@ namespace Script {
             }
 
             private rotateTile(rotation: number): void {
-                  // Save the current translation
                   let translation = this.mtxLocal.translation.clone;
                   translation.add(this.rotationTranslationMap[rotation]);
-
-                  // Reset the local matrix
                   this.mtxLocal.set(fudge.Matrix4x4.IDENTITY());
-
-                  // Apply the rotation
                   this.mtxLocal.rotateY(rotation);
-
-                  // Apply the saved translation
                   this.mtxLocal.translation = translation;
+            }
+
+            friction(): number {
+                  return 0.9;
             }
       }
 }

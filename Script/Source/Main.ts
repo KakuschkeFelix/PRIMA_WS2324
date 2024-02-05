@@ -20,34 +20,32 @@ namespace Script {
 
     const graph = viewport.getBranch();
 
-    await createCars(graph);
-    const trackNode = buildTrack();
+    const {node: trackNode, offset: trackOffset} = buildTrack();
+    await createCars(graph, track, trackOffset);
     graph.appendChild(trackNode);
 
     fudge.Loop.addEventListener(fudge.EVENT.LOOP_FRAME, update);
     fudge.Loop.start();
   }
 
-  async function createCars(graph: fudge.Node): Promise<void> {
-    pcCar = new Car(PC_CAR_COLOR, CAR_POSITIONS[PC_CAR_COLOR], new KeyboardHandler());
-    cars = [pcCar, ...NPC_CAR_COLORS.map(color => new Car(color, CAR_POSITIONS[color], new AIHandler()))];
+  async function createCars(graph: fudge.Node, track: Track, offset: fudge.Vector2): Promise<void> {
+    pcCar = new Car(PC_CAR_COLOR, CAR_POSITIONS[PC_CAR_COLOR], new KeyboardHandler(), new FrictionHandler(track, offset));
+    cars = [pcCar, ...NPC_CAR_COLORS.map(color => new Car(color, CAR_POSITIONS[color], new AIHandler(), new FrictionHandler(track, offset)))];
     await Promise.all(cars.map(car => car.initializeAnimation()));
     cars.forEach(car => graph.addChild(car));
-
-    console.log(cars[0]);
   }
 
-  function buildTrack(): fudge.Node {
+  function buildTrack(): {node: fudge.Node, offset: fudge.Vector2} {
     track = [
       [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
       [new TileGrass(), new TileTurn("Right", 0), new TileTurn("Right", 270)],
       [new TileGrass(), new TileStraight(), new TileTurn("Left",180), new TileTurn("Right", 270)],
-      [new TileGrass(), new TileTurn("Right", 90), new TileStraight(), new TileTurn("Right", 180)],
+      [new TileGrass(), new TileTurn("Right", 90), new TileStraight("Horizontal"), new TileTurn("Right", 180)],
       [new TileGrass(), new TileGrass(), new TileGrass()]
     ];
     const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();
-    return trackBuilder.buildTrack(track, offset);
+    return { node: trackBuilder.buildTrack(track, offset), offset };
   }
 
   function update(_event: Event): void {

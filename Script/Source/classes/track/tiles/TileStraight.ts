@@ -2,8 +2,8 @@ namespace Script {
       import fudge = FudgeCore;
 
       export class TileStraight extends fudge.Node implements Tile {
-            constructor() {
-                  const name = "TileStraight";
+            constructor(public orientation: "Horizontal" | "Vertical" = "Vertical") {
+                  const name = `TileStraight_${orientation}`;
                   super(name);
             }
 
@@ -32,6 +32,21 @@ namespace Script {
                         }
                   }
                   this.mtxLocal.translate(position);
+                  if (this.orientation === "Horizontal") {
+                        this.horizontalTile();
+                  }
+            }
+
+            private horizontalTile(): void {
+                  let translation = this.mtxLocal.translation.clone;
+                  translation.add(new fudge.Vector3(0.5, 0, -0.5));
+                  this.mtxLocal.set(fudge.Matrix4x4.IDENTITY());
+                  this.mtxLocal.rotateY(90);
+                  this.mtxLocal.translation = translation;
+            }
+
+            friction(): number {
+                  return 0.9;
             }
       }
 }

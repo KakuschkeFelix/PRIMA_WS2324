@@ -54,30 +54,29 @@ var Script;
         camera = new Script.Camera(cameraPos, viewport);
         viewport.camera = camera.cmp;
         const graph = viewport.getBranch();
-        await createCars(graph);
-        const trackNode = buildTrack();
+        const { node: trackNode, offset: trackOffset } = buildTrack();
+        await createCars(graph, track, trackOffset);
         graph.appendChild(trackNode);
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
     }
-    async function createCars(graph) {
-        pcCar = new Script.Car(Script.PC_CAR_COLOR, Script.CAR_POSITIONS[Script.PC_CAR_COLOR], new Script.KeyboardHandler());
-        cars = [pcCar, ...Script.NPC_CAR_COLORS.map(color => new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler()))];
+    async function createCars(graph, track, offset) {
+        pcCar = new Script.Car(Script.PC_CAR_COLOR, Script.CAR_POSITIONS[Script.PC_CAR_COLOR], new Script.KeyboardHandler(), new Script.FrictionHandler(track, offset));
+        cars = [pcCar, ...Script.NPC_CAR_COLORS.map(color => new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.FrictionHandler(track, offset)))];
         await Promise.all(cars.map(car => car.initializeAnimation()));
         cars.forEach(car => graph.addChild(car));
-        console.log(cars[0]);
     }
     function buildTrack() {
         track = [
             [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
             [new Script.TileGrass(), new Script.TileTurn("Right", 0), new Script.TileTurn("Right", 270)],
             [new Script.TileGrass(), new Script.TileStraight(), new Script.TileTurn("Left", 180), new Script.TileTurn("Right", 270)],
-            [new Script.TileGrass(), new Script.TileTurn("Right", 90), new Script.TileStraight(), new Script.TileTurn("Right", 180)],
+            [new Script.TileGrass(), new Script.TileTurn("Right", 90), new Script.TileStraight("Horizontal"), new Script.TileTurn("Right", 180)],
             [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()]
         ];
         const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
-        return trackBuilder.buildTrack(track, offset);
+        return { node: trackBuilder.buildTrack(track, offset), offset };
     }
     function update(_event) {
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
@@ -132,14 +131,16 @@ var Script;
     class Car extends fudgeAid.NodeSprite {
         color;
         handler;
+        frictionHandler;
         speed = fudge.Vector3.ZERO();
         acceleration = fudge.Vector3.ZERO();
         position;
         rotation;
-        constructor(color, position, handler) {
+        constructor(color, position, handler, frictionHandler) {
             super(color);
             this.color = color;
             this.handler = handler;
+            this.frictionHandler = frictionHandler;
             this.addComponent(new fudge.ComponentTransform());
             this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
             this.mtxLocal.scale(fudge.Vector3.ONE(0.5));
@@ -175,7 +176,7 @@ var Script;
             if (this.speed.magnitude / timeDeltaSeconds < Script.CAR_MIN_SPEED) {
                 this.speed = fudge.Vector3.ZERO();
             }
-            this.speed.scale(1 - Script.ROAD_FRICTION);
+            this.speed.scale(this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z)));
             this.mtxLocal.translate(this.speed, false);
         }
         calculateRotationFrame(carY) {
@@ -274,6 +275,34 @@ var Script;
 var Script;
 (function (Script) {
     var fudge = FudgeCore;
+    class FrictionHandler {
+        track;
+        offset;
+        defaultFriction;
+        constructor(track, offset) {
+            this.track = track;
+            this.offset = offset;
+            this.defaultFriction = new Script.TileGrass().friction();
+        }
+        getFrictionAt(position) {
+            const tilePosition = this.getTilePosition(position);
+            const tile = this.track[tilePosition.y]?.[tilePosition.x];
+            if (tile) {
+                return tile.friction();
+            }
+            return this.defaultFriction;
+        }
+        getTilePosition(position) {
+            const tilePosition = new fudge.Vector2(Math.floor((position.x - this.offset.x) / Script.TILE_WIDTH) + this.offset.x, Math.floor((position.y - this.offset.y - 0.5) / Script.TILE_WIDTH) + this.offset.y);
+            tilePosition.scale(-1);
+            return tilePosition;
+        }
+    }
+    Script.FrictionHandler = FrictionHandler;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
     class TrackBuilder {
         buildTrack(track, offset) {
             const trackGraph = new fudge.Node("TrackAbc");
@@ -330,6 +359,9 @@ var Script;
             this.appendChild(node);
             this.mtxLocal.translate(position);
         }
+        friction() {
+            return 0.8;
+        }
     }
     Script.TileGrass = TileGrass;
 })(Script || (Script = {}));
@@ -337,9 +369,11 @@ var Script;
 (function (Script) {
     var fudge = FudgeCore;
     class TileStraight extends fudge.Node {
-        constructor() {
-            const name = "TileStraight";
+        orientation;
+        constructor(orientation = "Vertical") {
+            const name = `TileStraight_${orientation}`;
             super(name);
+            this.orientation = orientation;
         }
         build(position, offset) {
             position.add(new fudge.Vector3(offset.x, 0, offset.y));
@@ -366,6 +400,19 @@ var Script;
                 }
             }
             this.mtxLocal.translate(position);
+            if (this.orientation === "Horizontal") {
+                this.horizontalTile();
+            }
+        }
+        horizontalTile() {
+            let translation = this.mtxLocal.translation.clone;
+            translation.add(new fudge.Vector3(0.5, 0, -0.5));
+            this.mtxLocal.set(fudge.Matrix4x4.IDENTITY());
+            this.mtxLocal.rotateY(90);
+            this.mtxLocal.translation = translation;
+        }
+        friction() {
+            return 0.9;
         }
     }
     Script.TileStraight = TileStraight;
@@ -382,7 +429,7 @@ var Script;
             270: new fudge.Vector3(-0.5, 0, -0.5)
         };
         constructor(orientation, rotation) {
-            const name = "TileStraight";
+            const name = `TileTurn_${orientation}_${rotation}`;
             super(name);
             this.rotation = rotation;
             if (orientation === "Left") {
@@ -424,15 +471,14 @@ var Script;
             return node;
         }
         rotateTile(rotation) {
-            // Save the current translation
             let translation = this.mtxLocal.translation.clone;
             translation.add(this.rotationTranslationMap[rotation]);
-            // Reset the local matrix
             this.mtxLocal.set(fudge.Matrix4x4.IDENTITY());
-            // Apply the rotation
             this.mtxLocal.rotateY(rotation);
-            // Apply the saved translation
             this.mtxLocal.translation = translation;
+        }
+        friction() {
+            return 0.9;
         }
     }
     Script.TileTurn = TileTurn;

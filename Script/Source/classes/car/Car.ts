@@ -8,7 +8,7 @@ namespace Script {
             position: fudge.Vector2;
             rotation: number;
 
-            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase) {
+            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private frictionHandler: FrictionHandler) {
                   super(color);
                   this.addComponent(new fudge.ComponentTransform());
                   this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
@@ -52,7 +52,7 @@ namespace Script {
                         this.speed = fudge.Vector3.ZERO();
                   }
 
-                  this.speed.scale(1 - ROAD_FRICTION);
+                  this.speed.scale(this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z)));
                   
                   this.mtxLocal.translate(this.speed, false);
             }

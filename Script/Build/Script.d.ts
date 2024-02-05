@@ -25,11 +25,12 @@ declare namespace Script {
     class Car extends fudgeAid.NodeSprite {
         color: CarColor;
         handler: HandlerBase;
+        private frictionHandler;
         speed: fudge.Vector3;
         acceleration: fudge.Vector3;
         position: fudge.Vector2;
         rotation: number;
-        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase);
+        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, frictionHandler: FrictionHandler);
         update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number): void;
         move(transformation: [number, number], timeDeltaSeconds: number): void;
         calculateRotationFrame(carY: number): number;
@@ -77,6 +78,17 @@ declare namespace Script {
 }
 declare namespace Script {
     import fudge = FudgeCore;
+    class FrictionHandler {
+        private track;
+        private offset;
+        defaultFriction: number;
+        constructor(track: Track, offset: fudge.Vector2);
+        getFrictionAt(position: fudge.Vector2): number;
+        private getTilePosition;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
     class TrackBuilder {
         buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
         buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
@@ -88,22 +100,27 @@ declare namespace Script {
 }
 declare namespace Script {
     import fudge = FudgeCore;
+    interface Tile extends fudge.Node {
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+        friction(): number;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
     class TileGrass extends fudge.Node implements Tile {
         constructor();
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
+        friction(): number;
     }
 }
 declare namespace Script {
     import fudge = FudgeCore;
     class TileStraight extends fudge.Node implements Tile {
-        constructor();
+        orientation: "Horizontal" | "Vertical";
+        constructor(orientation?: "Horizontal" | "Vertical");
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
-    }
-}
-declare namespace Script {
-    import fudge = FudgeCore;
-    interface Tile extends fudge.Node {
-        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+        private horizontalTile;
+        friction(): number;
     }
 }
 declare namespace Script {
@@ -115,5 +132,6 @@ declare namespace Script {
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
         private buildQuad;
         private rotateTile;
+        friction(): number;
     }
 }
