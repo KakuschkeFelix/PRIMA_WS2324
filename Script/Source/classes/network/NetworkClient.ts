@@ -8,6 +8,7 @@ namespace Script {
             peers: Set<string> = new Set();
             lastPosition: fudge.Vector3;
             lastRotation: number;
+            raceOver: boolean = false;
 
             constructor() {
                   this.client = new fudgeNet.FudgeClient();
@@ -84,6 +85,9 @@ namespace Script {
                         if (message.content.rotation) {
                               this.lastRotation = message.content.rotation;
                         }
+                        if (message.content.raceOver) {
+                              this.raceOver = true;
+                        }
                   }
             }
 
@@ -109,6 +113,18 @@ namespace Script {
                         route: fudgeNet.ROUTE.VIA_SERVER,
                         content: {
                               rotation,
+                        },
+                        idSource: this.id,
+                        idTarget: [...this.peers][0],
+                  })
+            }
+
+            public async sendRaceOver() {
+                  if (![...this.peers][0]) return;
+                  this.client.dispatch({
+                        route: fudgeNet.ROUTE.VIA_SERVER,
+                        content: {
+                              raceOver: true,
                         },
                         idSource: this.id,
                         idTarget: [...this.peers][0],

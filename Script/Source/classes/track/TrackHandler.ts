@@ -3,7 +3,7 @@ namespace Script {
 
       export class TrackHandler {
             defaultFriction: number;
-            constructor(private track: Track, private offset: fudge.Vector2) {
+            constructor(public track: Track, public offset: fudge.Vector2) {
                   this.defaultFriction = new TileGrass().friction();
             }
 
@@ -16,7 +16,7 @@ namespace Script {
                   return this.defaultFriction;
             }
 
-            private getTilePosition(position: fudge.Vector2): fudge.Vector2 {
+            public getTilePosition(position: fudge.Vector2): fudge.Vector2 {
                   const tilePosition = new fudge.Vector2(Math.floor((position.x - this.offset.x) / TILE_WIDTH) + this.offset.x, Math.floor((position.y  - this.offset.y - 0.5) / TILE_WIDTH) + this.offset.y);
                   tilePosition.scale(-1);
                   return tilePosition;

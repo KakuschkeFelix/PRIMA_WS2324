@@ -44,8 +44,11 @@ var Script;
     let camera;
     let cars = [];
     let pcCar;
+    let pcCheckpointHandler;
     let track;
+    let checkpoints = [];
     let ui;
+    let raceOver = false;
     let client;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
     document.addEventListener('startClick', async (event) => {
@@ -56,6 +59,7 @@ var Script;
         viewport = _event.detail;
         const graph = viewport.getBranch();
         ui = new Script.VUIHandler();
+        ui.maxRounds = Script.MAX_ROUNDS;
         const { node: trackNode, offset: trackOffset, borderNode } = buildTrack();
         graph.appendChild(trackNode);
         graph.appendChild(borderNode);
@@ -90,7 +94,11 @@ var Script;
     }
     async function createPCCar(graph, track, offset, playerOne) {
         const color = playerOne ? Script.PLAYER_ONE_COLOR : Script.PLAYER_TWO_COLOR;
-        pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), new Script.TrackHandler(track, offset), client);
+        const trackHandler = new Script.TrackHandler(track, offset);
+        pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), trackHandler, client);
+        pcCheckpointHandler = pcCar.getComponent(Script.CarCheckpointScript);
+        pcCheckpointHandler.trackHandler = trackHandler;
+        pcCheckpointHandler.setupCheckpoints(checkpoints);
         await pcCar.initializeAnimation();
         graph.addChild(pcCar);
         cars.push(pcCar);
@@ -113,6 +121,7 @@ var Script;
             [new Script.TileGrass(), new Script.TileTurn("Right", "Top"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Top", "Left"), new Script.TileGrass()],
             [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
         ];
+        checkpoints = [new fudge.Vector2(2, 1), new fudge.Vector2(5, 2), new fudge.Vector2(10, 1), new fudge.Vector2(14, 4), new fudge.Vector2(11, 6)];
         const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
         return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset) };
@@ -124,13 +133,27 @@ var Script;
                 allPlayersReady = true;
             }
         }
+        const stopRace = !allPlayersReady || raceOver;
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
         cars.forEach(car => {
-            car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, !allPlayersReady, car.color !== pcCar.color);
+            car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, stopRace, car.color !== pcCar.color);
         });
         camera.follow(pcCar);
-        if (allPlayersReady) {
+        if (!stopRace) {
+            pcCheckpointHandler.checkCheckpoint();
             ui.increaseTime(timeDeltaSeconds);
+            ui.rounds = pcCheckpointHandler.currentRound;
+            if (pcCheckpointHandler.currentRound >= Script.MAX_ROUNDS) {
+                raceOver = true;
+                await client.sendRaceOver();
+                ui.showWinner(true);
+            }
+            else {
+                raceOver = client.raceOver;
+                if (raceOver) {
+                    ui.showWinner(false);
+                }
+            }
         }
         viewport.draw();
     }
@@ -178,7 +201,6 @@ var Script;
         client;
         speed = fudge.Vector3.ZERO();
         acceleration = fudge.Vector3.ZERO();
-        position;
         rotation;
         constructor(color, position, handler, trackHandler, client) {
             super(color);
@@ -190,12 +212,13 @@ var Script;
             this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
             this.mtxLocal.scale(fudge.Vector3.ONE(0.5));
             this.rotation = 0;
+            this.addComponent(new Script.CarCheckpointScript());
         }
         update(_cameraTranslation, timeDeltaSeconds, idle = false, otherPlayer = false) {
             const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
             this.rotate(_cameraTranslation, carY);
-            const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
             if (!idle && !otherPlayer) {
+                const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
                 this.move(nextAction, timeDeltaSeconds);
             }
             if (otherPlayer) {
@@ -267,6 +290,62 @@ var Script;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
+    var fudgeCore = FudgeCore;
+    fudgeCore.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
+    class CarCheckpointScript extends fudgeCore.ComponentScript {
+        static iSubclass = fudgeCore.Component.registerSubclass(Script.CustomComponentScript);
+        checkpoints = [];
+        currentCheckpoint = 0;
+        currentRound = 0;
+        trackHandler;
+        constructor() {
+            super();
+            // Don't start when running in editor
+            if (fudgeCore.Project.mode == fudgeCore.MODE.EDITOR)
+                return;
+            // Listen to this component being added to or removed from a node
+            this.addEventListener("componentAdd" /* fudgeCore.EVENT.COMPONENT_ADD */, this.hndEvent);
+            this.addEventListener("componentRemove" /* fudgeCore.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+            this.addEventListener("nodeDeserialized" /* fudgeCore.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+        }
+        // Activate the functions of this component as response to events
+        hndEvent = (_event) => {
+            switch (_event.type) {
+                case "componentAdd" /* fudgeCore.EVENT.COMPONENT_ADD */:
+                    break;
+                case "componentRemove" /* fudgeCore.EVENT.COMPONENT_REMOVE */:
+                    this.removeEventListener("componentAdd" /* fudgeCore.EVENT.COMPONENT_ADD */, this.hndEvent);
+                    this.removeEventListener("componentRemove" /* fudgeCore.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                    break;
+                case "nodeDeserialized" /* fudgeCore.EVENT.NODE_DESERIALIZED */:
+                    // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+                    break;
+            }
+        };
+        setupCheckpoints(checkpoints) {
+            const startPos = this.trackHandler.offset.clone;
+            startPos.scale(-1);
+            this.checkpoints = [...checkpoints, startPos];
+        }
+        checkCheckpoint() {
+            const carPosition = this.node.mtxLocal.translation.clone;
+            const checkpointPosition = this.trackHandler.getTilePosition(new fudgeCore.Vector2(carPosition.x, carPosition.z));
+            console.log(checkpointPosition.toString());
+            if (this.currentCheckpoint < this.checkpoints.length) {
+                if (this.checkpoints[this.currentCheckpoint].equals(checkpointPosition)) {
+                    this.currentCheckpoint++;
+                }
+            }
+            else {
+                this.currentRound++;
+                this.currentCheckpoint = 0;
+            }
+        }
+    }
+    Script.CarCheckpointScript = CarCheckpointScript;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
     var fudge = FudgeCore;
     Script.PLAYER_ONE_COLOR = "carRed";
     Script.PLAYER_TWO_COLOR = "carBlue";
@@ -275,8 +354,8 @@ var Script;
     Script.CAR_FRAMES_RIGHT = 9;
     Script.CAR_FRAME_ANGLE_DIFF = 22.5;
     Script.CAR_POSITIONS = {
-        carRed: new fudge.Vector2(0.5, -1),
-        carBlue: new fudge.Vector2(-0.5, -1),
+        carRed: new fudge.Vector2(0.5, -2.5),
+        carBlue: new fudge.Vector2(-0.5, -2.5),
     };
     Script.CAR_MIN_ANGLE = 10; // 10
     Script.CAR_MAX_ANGLE = 70; // 70
@@ -329,6 +408,7 @@ var Script;
         peers = new Set();
         lastPosition;
         lastRotation;
+        raceOver = false;
         constructor() {
             this.client = new fudgeNet.FudgeClient();
         }
@@ -395,6 +475,9 @@ var Script;
                 if (message.content.rotation) {
                     this.lastRotation = message.content.rotation;
                 }
+                if (message.content.raceOver) {
+                    this.raceOver = true;
+                }
             }
         }
         async sendPosition(position) {
@@ -420,6 +503,18 @@ var Script;
                 route: fudgeNet.ROUTE.VIA_SERVER,
                 content: {
                     rotation,
+                },
+                idSource: this.id,
+                idTarget: [...this.peers][0],
+            });
+        }
+        async sendRaceOver() {
+            if (![...this.peers][0])
+                return;
+            this.client.dispatch({
+                route: fudgeNet.ROUTE.VIA_SERVER,
+                content: {
+                    raceOver: true,
                 },
                 idSource: this.id,
                 idTarget: [...this.peers][0],
@@ -528,6 +623,7 @@ var Script;
 var Script;
 (function (Script) {
     Script.TILE_WIDTH = 2;
+    Script.MAX_ROUNDS = 3;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -756,7 +852,9 @@ var Script;
     var fudgeVUI = FudgeUserInterface;
     class VUIHandler extends fudge.Mutable {
         rounds = 0;
+        maxRounds = 0;
         timeString = "00:00.000";
+        winnerMessage = "";
         controller;
         time = 0;
         constructor() {
@@ -775,6 +873,16 @@ var Script;
             const seconds = Math.floor(this.time) % 60;
             const minutes = Math.floor(this.time / 60) % 60;
             return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`;
+        }
+        showWinner(player) {
+            const winnerDiv = document.getElementById("winnerScreen");
+            winnerDiv.style.display = "flex";
+            if (player) {
+                this.winnerMessage = "You win!";
+            }
+            else {
+                this.winnerMessage = "You lose!";
+            }
         }
     }
     Script.VUIHandler = VUIHandler;

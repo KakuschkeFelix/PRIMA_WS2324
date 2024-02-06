@@ -6,8 +6,11 @@ namespace Script {
   let camera: Camera;
   let cars: Car[] = [];
   let pcCar: Car;
+  let pcCheckpointHandler: CarCheckpointScript;
   let track: Track;
+  let checkpoints: fudge.Vector2[] = [];
   let ui: VUIHandler;
+  let raceOver: boolean = false;
 
   let client: NetworkClient;
   document.addEventListener("interactiveViewportStarted", (event: any) => start(event));
@@ -23,6 +26,7 @@ namespace Script {
     const graph = viewport.getBranch();
 
     ui = new VUIHandler();
+    ui.maxRounds = MAX_ROUNDS;
     
     const {node: trackNode, offset: trackOffset, borderNode} = buildTrack();
     graph.appendChild(trackNode);
@@ -62,7 +66,11 @@ namespace Script {
 
   async function createPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, playerOne: boolean): Promise<void> {
     const color = playerOne ? PLAYER_ONE_COLOR : PLAYER_TWO_COLOR;
-    pcCar = new Car(color, CAR_POSITIONS[color], new KeyboardHandler(), new TrackHandler(track, offset), client);
+    const trackHandler = new TrackHandler(track, offset);
+    pcCar = new Car(color, CAR_POSITIONS[color], new KeyboardHandler(), trackHandler, client);
+    pcCheckpointHandler = pcCar.getComponent(CarCheckpointScript);
+    pcCheckpointHandler.trackHandler = trackHandler;
+    pcCheckpointHandler.setupCheckpoints(checkpoints);
     await pcCar.initializeAnimation();
     graph.addChild(pcCar);
     cars.push(pcCar)
@@ -87,6 +95,8 @@ namespace Script {
       [new TileGrass(), new TileTurn("Right", "Top"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Top", "Left"), new TileGrass()],
       [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
     ];
+
+    checkpoints = [new fudge.Vector2(2, 1), new fudge.Vector2(5, 2), new fudge.Vector2(10, 1), new fudge.Vector2(14, 4), new fudge.Vector2(11, 6)]
     const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();
     return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset)};
@@ -99,13 +109,26 @@ namespace Script {
         allPlayersReady = true;
       }
     }
+    const stopRace = !allPlayersReady || raceOver;
     const timeDeltaSeconds: number = fudge.Loop.timeFrameGame / 1000;
     cars.forEach(car => {
-      car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, !allPlayersReady, car.color !== pcCar.color);
+      car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, stopRace, car.color !== pcCar.color);
     });
     camera.follow(pcCar);
-    if (allPlayersReady) {
+    if (!stopRace) {
+      pcCheckpointHandler.checkCheckpoint();
       ui.increaseTime(timeDeltaSeconds);
+      ui.rounds = pcCheckpointHandler.currentRound;
+      if (pcCheckpointHandler.currentRound >= MAX_ROUNDS) {
+        raceOver = true;
+        await client.sendRaceOver();
+        ui.showWinner(true);
+      } else {
+        raceOver = client.raceOver;
+        if (raceOver) {
+          ui.showWinner(false);
+        }
+      }
     }
     viewport.draw();
   }

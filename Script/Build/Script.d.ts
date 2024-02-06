@@ -29,7 +29,6 @@ declare namespace Script {
         private client;
         speed: fudge.Vector3;
         acceleration: fudge.Vector3;
-        position: fudge.Vector2;
         rotation: number;
         constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, trackHandler: TrackHandler, client: NetworkClient);
         update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number, idle?: boolean, otherPlayer?: boolean): void;
@@ -38,6 +37,20 @@ declare namespace Script {
         calculateRotationRelativeToCamera(_cameraTranslation: fudge.Vector3): number;
         rotate(_cameraTranslation: fudge.Vector3, carY: number): void;
         initializeAnimation(): Promise<void>;
+    }
+}
+declare namespace Script {
+    import fudgeCore = FudgeCore;
+    class CarCheckpointScript extends fudgeCore.ComponentScript {
+        static readonly iSubclass: number;
+        checkpoints: fudgeCore.Vector2[];
+        private currentCheckpoint;
+        currentRound: number;
+        trackHandler: TrackHandler;
+        constructor();
+        hndEvent: (_event: Event) => void;
+        setupCheckpoints(checkpoints: fudgeCore.Vector2[]): void;
+        checkCheckpoint(): void;
     }
 }
 declare namespace Script {
@@ -84,6 +97,7 @@ declare namespace Script {
         peers: Set<string>;
         lastPosition: fudge.Vector3;
         lastRotation: number;
+        raceOver: boolean;
         constructor();
         connect(address: string): Promise<void>;
         getOtherCars(): Promise<string[]>;
@@ -92,6 +106,7 @@ declare namespace Script {
         private handleMessage;
         sendPosition(position: fudge.Vector3): Promise<void>;
         sendRotation(rotation: number): Promise<void>;
+        sendRaceOver(): Promise<void>;
     }
 }
 declare namespace Script {
@@ -108,17 +123,18 @@ declare namespace Script {
 declare namespace Script {
     import fudge = FudgeCore;
     class TrackHandler {
-        private track;
-        private offset;
+        track: Track;
+        offset: fudge.Vector2;
         defaultFriction: number;
         constructor(track: Track, offset: fudge.Vector2);
         getFrictionAt(position: fudge.Vector2): number;
-        private getTilePosition;
+        getTilePosition(position: fudge.Vector2): fudge.Vector2;
         isOutOfBounds(position: fudge.Vector2): boolean;
     }
 }
 declare namespace Script {
     const TILE_WIDTH = 2;
+    const MAX_ROUNDS = 3;
     type Track = Tile[][];
 }
 declare namespace Script {
@@ -181,12 +197,15 @@ declare namespace Script {
     import fudgeVUI = FudgeUserInterface;
     class VUIHandler extends fudge.Mutable {
         rounds: number;
+        maxRounds: number;
         timeString: string;
+        winnerMessage: string;
         controller: fudgeVUI.Controller;
         private time;
         constructor();
         protected reduceMutator(_mutator: fudge.Mutator): void;
         increaseTime(timeDeltaSeconds: number): void;
         private getTimeString;
+        showWinner(player: boolean): void;
     }
 }

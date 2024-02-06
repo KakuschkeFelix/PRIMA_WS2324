@@ -5,7 +5,6 @@ namespace Script {
       export class Car extends fudgeAid.NodeSprite  {
             speed = fudge.Vector3.ZERO();
             acceleration = fudge.Vector3.ZERO();
-            position: fudge.Vector2;
             rotation: number;
 
             constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private trackHandler: TrackHandler, private client: NetworkClient) {
@@ -14,13 +13,14 @@ namespace Script {
                   this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
                   this.mtxLocal.scale(fudge.Vector3.ONE(0.5));
                   this.rotation = 0;
+                  this.addComponent(new CarCheckpointScript())
             }
 
             update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number, idle = false, otherPlayer = false): void {
                   const carY = this.calculateRotationRelativeToCamera(_cameraTranslation);
                   this.rotate(_cameraTranslation, carY);
-                  const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
                   if (!idle && !otherPlayer) {
+                        const nextAction = this.handler.nextAction(this.mtxLocal.translation, this.rotation, this.client);
                         this.move(nextAction, timeDeltaSeconds);
                   }
                   if (otherPlayer) {

@@ -12,8 +12,8 @@ namespace Script {
       export const CAR_FRAME_ANGLE_DIFF = 22.5;
 
       export const CAR_POSITIONS: Record<CarColor, fudge.Vector2> = {
-            carRed: new fudge.Vector2(0.5, -1),
-            carBlue: new fudge.Vector2(-0.5, -1),
+            carRed: new fudge.Vector2(0.5, -2.5),
+            carBlue: new fudge.Vector2(-0.5, -2.5),
       };
 
       export const CAR_MIN_ANGLE = 10; // 10

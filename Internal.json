@@ -308,8 +308,8 @@
                       {
                         "ƒ.ComponentTransform": {
                           "local": {
-                            "translation": "[0, 0, 0]",
-                            "rotation": "[0, 0, 0]",
+                            "translation": "[0, 0, -1.0000001192092896]",
+                            "rotation": "[0, 180, 0]",
                             "scaling": "[1, 1, 1]"
                           },
                           "Component": {

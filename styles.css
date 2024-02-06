@@ -66,11 +66,37 @@ canvas.fullscreen {
   top: 0;
   left: 0;
   width: 100%;
-  display: flex;
+  height: 100%;
+    z-index: 1000;
+    font-size: 24px;
+  }
+  
+  #VUI #info {
+    display: flex;
+    width: 100%;
   justify-content: space-around;
   align-items: center;
+}
+
+#VUI #winnerScreen {
+  width: 100%;
+  height: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
   z-index: 1000;
-  font-size: 24px;
+  text-align: center;
+  }
+  
+  #VUI #winnerScreen input {
+    font-size: 40px;
+    text-align: center;
+    text-shadow: 0px 0px 15px rgba(0, 0, 0, 1);
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #cba;
+    width: 300px;
 }
 
 #VUI input {
@@ -87,7 +113,7 @@ canvas.fullscreen {
 }
 
 #VUI #rounds input {
-  width: 3ch;
+  width: 1ch;
 }
 
 #VUI span {
