@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Furtwangen Drift</title>
+<title>PRIMA_WS2324</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" href="styles.css" />
 
@@ -15,6 +15,7 @@
 <script type="text/javascript" src="https://jirkadelloro.github.io/FUDGE/Core/Build/FudgeCore.js"></script>
 <script type="text/javascript" src="https://jirkadelloro.github.io/FUDGE/Aid/Build/FudgeAid.js"></script>
 <script type="text/javascript" src="https://jirkadelloro.github.io/FUDGE/Net/Build/Client/FudgeClient.js"></script>
+<script type="text/javascript" src="https://jirkadelloro.github.io/FUDGE/UserInterface/Build/FudgeUserInterface.js"></script>
 
 <!--Link internal resources. The editor only loads the first, but at runtime, multiple files can contribute-->
 <link type="resources" src="Internal.json" />
@@ -30,11 +31,20 @@
       <dialog>
             <p>FUDGE Autoview</p>
             <h1>Title (will be replaced by Autoview)</h1>
-            <input type="url" id="serverAddress" placeholder="ws://address:port" pattern="wss://.*:[0-9]+|ws://.*:[0-9]+" required>
-            <span class="error" id="serverAddressError"></span>
+            <input type="url" id="serverAddress" placeholder="ws://address:port" pattern="wss://.*:[0-9]+|ws://.*:[0-9]+" required="" />
+            <span class="error" id="serverAddressError">
+</span>
             <button id="start">Start</button>
       </dialog>
       <canvas class="fullscreen">
       </canvas>
+      <div id="VUI">
+            <div id="time">
+                  <span>Zeit:&nbsp;</span><input type="input" key="timeString" disabled="" />
+            </div>
+            <div id="rounds">
+                  <span>Runde:&nbsp;</span><input type="input" key="rounds" disabled="" /><span>/3</span>
+            </div>
+      </div>
 </body>
 </html>

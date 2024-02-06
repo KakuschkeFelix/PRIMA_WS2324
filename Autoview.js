@@ -44,7 +44,7 @@ function init(_event)/* : void */ {
       alert("Please enter a valid server address");
       return;
     }
-    const client = await checkConnection(serverAddressInput.value).catch(() => undefined);
+    const client = await makeConnection(serverAddressInput.value).catch(() => undefined);
     if (!client) {
       serverAddressError.textContent = "Could not connect to server";
       return;
@@ -52,6 +52,12 @@ function init(_event)/* : void */ {
     dialog.style.display = "none";
     dialog.close();
     client.socket.close();
+    // check if the connection is still open
+    let connectionOpen = await checkConnection(client).catch(() => false);
+    for (let i = 0; i < 5 && !connectionOpen; i++) {
+      connectionOpen = await checkConnection(client).catch(() => false);
+      if (!connectionOpen) break;
+    }
     button.dispatchEvent(new CustomEvent("startClick", { bubbles: true, detail: serverAddressInput.value}));
     let graphId/* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
     startInteractiveViewport(graphId);
@@ -64,7 +70,7 @@ function init(_event)/* : void */ {
  * @param {string} address 
  * @returns {Promise<fudgeNet.FudgeClient>}
  */
-async function checkConnection(address) {
+async function makeConnection(address) {
   const client = new fudgeNet.FudgeClient();
   client.connectToServer(address);
 
@@ -86,7 +92,27 @@ async function checkConnection(address) {
               }
         }, 100);
   });
+}
 
+async function checkConnection(client) {
+  const maxAttempts = 10;
+  let attempts = 0;
+
+  return new Promise((resolve, reject) => {
+        const intervalId = setInterval(() => {
+              attempts++;
+
+              const result = client.id;
+
+              if (result !== undefined) {
+                    clearInterval(intervalId);
+                    resolve(client);
+              } else if (attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                    reject(new Error('Unable to get result within 1 second'));
+              }
+        }, 100);
+  });
 }
 
 // setup and start interactive viewport

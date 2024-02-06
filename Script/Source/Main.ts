@@ -7,6 +7,7 @@ namespace Script {
   let cars: Car[] = [];
   let pcCar: Car;
   let track: Track;
+  let ui: VUIHandler;
 
   let client: NetworkClient;
   document.addEventListener("interactiveViewportStarted", (event: any) => start(event));
@@ -20,9 +21,12 @@ namespace Script {
 
     
     const graph = viewport.getBranch();
+
+    ui = new VUIHandler();
     
-    const {node: trackNode, offset: trackOffset} = buildTrack();
+    const {node: trackNode, offset: trackOffset, borderNode} = buildTrack();
     graph.appendChild(trackNode);
+    graph.appendChild(borderNode);
 
     const others = await client.getOtherCars();
     
@@ -72,7 +76,7 @@ namespace Script {
     cars.push(car);
   }
 
-  function buildTrack(): {node: fudge.Node, offset: fudge.Vector2} {
+  function buildTrack(): {node: fudge.Node, offset: fudge.Vector2, borderNode: fudge.Node} {
     track = [
       [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
       [new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass(), new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass()],
@@ -85,7 +89,7 @@ namespace Script {
     ];
     const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();
-    return { node: trackBuilder.buildTrack(track, offset), offset };
+    return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset)};
   }
 
   async function update(_event: Event): Promise<void> {
@@ -100,6 +104,9 @@ namespace Script {
       car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, !allPlayersReady, car.color !== pcCar.color);
     });
     camera.follow(pcCar);
+    if (allPlayersReady) {
+      ui.increaseTime(timeDeltaSeconds);
+    }
     viewport.draw();
   }
 }

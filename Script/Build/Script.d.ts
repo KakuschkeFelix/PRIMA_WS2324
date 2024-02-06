@@ -99,6 +99,10 @@ declare namespace Script {
     class TrackBuilder {
         buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
         buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
+        buildBorder(track: Track, offset: fudge.Vector2, grassRows?: number): fudge.Node;
+        private buildBorderAndGrassTiles;
+        private buildGrassTiles;
+        private buildCornerGrassTiles;
     }
 }
 declare namespace Script {
@@ -120,6 +124,17 @@ declare namespace Script {
 declare namespace Script {
     import fudge = FudgeCore;
     interface Tile extends fudge.Node {
+        build(position: fudge.Vector3, offset: fudge.Vector2): void;
+        friction(): number;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TileBorder extends fudge.Node implements Tile {
+        borderLocation: "Top" | "Bottom" | "Left" | "Right";
+        private locationRotationMap;
+        private locationTranslationMap;
+        constructor(borderLocation: "Top" | "Bottom" | "Left" | "Right");
         build(position: fudge.Vector3, offset: fudge.Vector2): void;
         friction(): number;
     }
@@ -160,4 +175,18 @@ declare namespace Script {
         friction(): number;
     }
     export {};
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    import fudgeVUI = FudgeUserInterface;
+    class VUIHandler extends fudge.Mutable {
+        rounds: number;
+        timeString: string;
+        controller: fudgeVUI.Controller;
+        private time;
+        constructor();
+        protected reduceMutator(_mutator: fudge.Mutator): void;
+        increaseTime(timeDeltaSeconds: number): void;
+        private getTimeString;
+    }
 }

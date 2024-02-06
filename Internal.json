@@ -987,5 +987,30 @@
       "idResource": "Graph|2024-02-04T13:56:39.694Z|37426",
       "type": "Graph"
     }
+  },
+  "TextureImage|2024-02-06T13:33:32.347Z|43789": {
+    "ƒ.TextureImage": {
+      "url": "Assets\\Images\\Background\\border.png",
+      "type": "TextureImage",
+      "Texture": {
+        "idResource": "TextureImage|2024-02-06T13:33:32.347Z|43789",
+        "name": "Assets\\Images\\Background\\border.png",
+        "mipmap": "CRISP",
+        "wrap": "REPEAT"
+      }
+    }
+  },
+  "Material|2024-02-06T13:33:43.407Z|74334": {
+    "ƒ.Material": {
+      "name": "texBorder",
+      "idResource": "Material|2024-02-06T13:33:43.407Z|74334",
+      "shader": "ShaderLitTextured",
+      "coat": {
+        "ƒ.CoatTextured": {
+          "color": "[1, 1, 1, 1]",
+          "idTexture": "TextureImage|2024-02-06T13:33:32.347Z|43789"
+        }
+      }
+    }
   }
 }

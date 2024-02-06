@@ -17,10 +17,10 @@ namespace Script {
               this.cmp.mtxPivot.translation = _position;
           }
 
-        public follow(car: Car, lerpFactor: number = 0.1): void {
+        public follow(car: Car, lerpFactor: number = 0.2): void {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
-            const distance = 1.5; // distance from the car
+            const distance = 2; // distance from the car
 
             // Calculate the new camera position in a circular path around the car
             const targetPos = new fudge.Vector3(
@@ -34,7 +34,7 @@ namespace Script {
             cameraPos.y += (targetPos.y - cameraPos.y) * lerpFactor;
             cameraPos.z += (targetPos.z - cameraPos.z) * lerpFactor;
 
-            this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
+            this.cmp.mtxPivot.rotation = new fudge.Vector3(15, -car.rotation, 0);
 
             this.cmp.mtxPivot.translation = cameraPos;
         }

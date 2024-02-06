@@ -45,6 +45,7 @@ var Script;
     let cars = [];
     let pcCar;
     let track;
+    let ui;
     let client;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
     document.addEventListener('startClick', async (event) => {
@@ -54,8 +55,10 @@ var Script;
     async function start(_event) {
         viewport = _event.detail;
         const graph = viewport.getBranch();
-        const { node: trackNode, offset: trackOffset } = buildTrack();
+        ui = new Script.VUIHandler();
+        const { node: trackNode, offset: trackOffset, borderNode } = buildTrack();
         graph.appendChild(trackNode);
+        graph.appendChild(borderNode);
         const others = await client.getOtherCars();
         let color;
         if (others.length > 0) {
@@ -112,7 +115,7 @@ var Script;
         ];
         const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
-        return { node: trackBuilder.buildTrack(track, offset), offset };
+        return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset) };
     }
     async function update(_event) {
         let allPlayersReady = false;
@@ -126,6 +129,9 @@ var Script;
             car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, !allPlayersReady, car.color !== pcCar.color);
         });
         camera.follow(pcCar);
+        if (allPlayersReady) {
+            ui.increaseTime(timeDeltaSeconds);
+        }
         viewport.draw();
     }
 })(Script || (Script = {}));
@@ -145,17 +151,17 @@ var Script;
         set position(_position) {
             this.cmp.mtxPivot.translation = _position;
         }
-        follow(car, lerpFactor = 0.1) {
+        follow(car, lerpFactor = 0.2) {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
-            const distance = 1.5; // distance from the car
+            const distance = 2; // distance from the car
             // Calculate the new camera position in a circular path around the car
             const targetPos = new fudge.Vector3(carPos.x + distance * Math.cos(car.rotation * Math.PI / 180 - Math.PI / 2), carPos.y + 1, carPos.z + distance * Math.sin(car.rotation * Math.PI / 180 - Math.PI / 2));
             // Use lerp to smoothly transition the camera's position
             cameraPos.x += (targetPos.x - cameraPos.x) * lerpFactor;
             cameraPos.y += (targetPos.y - cameraPos.y) * lerpFactor;
             cameraPos.z += (targetPos.z - cameraPos.z) * lerpFactor;
-            this.cmp.mtxPivot.rotation = new fudge.Vector3(30, -car.rotation, 0);
+            this.cmp.mtxPivot.rotation = new fudge.Vector3(15, -car.rotation, 0);
             this.cmp.mtxPivot.translation = cameraPos;
         }
     }
@@ -446,6 +452,44 @@ var Script;
             trackGraph.appendChild(node);
             return trackGraph;
         }
+        buildBorder(track, offset, grassRows = 2) {
+            const borderGraph = new fudge.Node("Border");
+            const LEFT = 0;
+            const RIGHT = track[0].length - 1;
+            const TOP = 0;
+            const BOTTOM = track.length - 1;
+            for (let row = 0; row < track.length; row++) {
+                for (let column = 0; column < track[row].length; column++) {
+                    this.buildBorderAndGrassTiles(row, column, borderGraph, offset, grassRows, LEFT, RIGHT, TOP, BOTTOM);
+                }
+            }
+            return borderGraph;
+        }
+        buildBorderAndGrassTiles(row, column, borderGraph, offset, grassRows, LEFT, RIGHT, TOP, BOTTOM) {
+            if (column === LEFT || column === RIGHT) {
+                this.buildTile(new Script.TileBorder(column === LEFT ? "Left" : "Right"), new fudge.Vector3(column + (column === LEFT ? -1 : 1), 0, row), borderGraph, offset);
+                this.buildGrassTiles(column, row, borderGraph, offset, grassRows, column === LEFT ? -1 : 1, 0);
+            }
+            if (row === TOP || row === BOTTOM) {
+                this.buildTile(new Script.TileBorder(row === TOP ? "Top" : "Bottom"), new fudge.Vector3(column, 0, row + (row === TOP ? -1 : 1)), borderGraph, offset);
+                this.buildGrassTiles(column, row, borderGraph, offset, grassRows, 0, row === TOP ? -1 : 1);
+            }
+            this.buildCornerGrassTiles(row, column, borderGraph, offset, grassRows, LEFT, RIGHT, TOP, BOTTOM);
+        }
+        buildGrassTiles(column, row, borderGraph, offset, grassRows, xDirection, zDirection) {
+            for (let i = 1; i <= grassRows; i++) {
+                this.buildTile(new Script.TileGrass(), new fudge.Vector3(column + i * xDirection, 0, row + i * zDirection), borderGraph, offset);
+            }
+        }
+        buildCornerGrassTiles(row, column, borderGraph, offset, grassRows, LEFT, RIGHT, TOP, BOTTOM) {
+            if ((column === LEFT && row === TOP) || (column === LEFT && row === BOTTOM) || (column === RIGHT && row === TOP) || (column === RIGHT && row === BOTTOM)) {
+                for (let i = 1; i <= grassRows; i++) {
+                    for (let j = 1; j <= grassRows; j++) {
+                        this.buildTile(new Script.TileGrass(), new fudge.Vector3(column + (column === LEFT ? -i : i), 0, row + (row === TOP ? -j : j)), borderGraph, offset);
+                    }
+                }
+            }
+        }
     }
     Script.TrackBuilder = TrackBuilder;
 })(Script || (Script = {}));
@@ -484,6 +528,56 @@ var Script;
 var Script;
 (function (Script) {
     Script.TILE_WIDTH = 2;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TileBorder extends fudge.Node {
+        borderLocation;
+        locationRotationMap = {
+            "Top": 0,
+            "Bottom": 0,
+            "Left": 90,
+            "Right": 90,
+        };
+        locationTranslationMap = {
+            "Top": (_x) => new fudge.Vector3(_x - 0.5, -0.01, -1.5),
+            "Bottom": (_x) => new fudge.Vector3(_x - 0.5, -0.01, 0.5),
+            "Left": (_x) => new fudge.Vector3(-1, -0.01, _x - 1),
+            "Right": (_x) => new fudge.Vector3(1, -0.01, _x - 1),
+        };
+        constructor(borderLocation) {
+            const name = "TileBorder";
+            super(name);
+            this.borderLocation = borderLocation;
+        }
+        build(position, offset) {
+            position.add(new fudge.Vector3(offset.x, 0, offset.y));
+            position.scale(-1);
+            const material = fudge.Project.getResourcesByName("texBorder")[0];
+            this.addComponent(new fudge.ComponentTransform());
+            for (let x = 0; x < 2; x++) {
+                const mtx = new fudge.Matrix4x4();
+                mtx.translate(this.locationTranslationMap[this.borderLocation](x));
+                mtx.rotateY(this.locationRotationMap[this.borderLocation]);
+                mtx.scaleY(0.5);
+                let node = new fudge.Node(`Quad_${x}`);
+                let cmpMesh = new fudge.ComponentMesh();
+                let mesh = new fudge.MeshSprite();
+                cmpMesh.mesh = mesh;
+                node.addComponent(cmpMesh);
+                let cmpMaterial = new fudge.ComponentMaterial(material);
+                node.addComponent(cmpMaterial);
+                node.addComponent(new fudge.ComponentTransform(mtx));
+                this.appendChild(node);
+            }
+            this.mtxLocal.translate(position);
+        }
+        friction() {
+            return 0;
+        }
+    }
+    Script.TileBorder = TileBorder;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -655,5 +749,34 @@ var Script;
         }
     }
     Script.TileTurn = TileTurn;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    var fudgeVUI = FudgeUserInterface;
+    class VUIHandler extends fudge.Mutable {
+        rounds = 0;
+        timeString = "00:00.000";
+        controller;
+        time = 0;
+        constructor() {
+            super();
+            this.controller = new fudgeVUI.Controller(this, document.getElementById("VUI"));
+        }
+        reduceMutator(_mutator) {
+            return;
+        }
+        increaseTime(timeDeltaSeconds) {
+            this.time += timeDeltaSeconds;
+            this.timeString = this.getTimeString();
+        }
+        getTimeString() {
+            const milliseconds = Math.floor(this.time * 1000) % 1000;
+            const seconds = Math.floor(this.time) % 60;
+            const minutes = Math.floor(this.time / 60) % 60;
+            return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(3, "0")}`;
+        }
+    }
+    Script.VUIHandler = VUIHandler;
 })(Script || (Script = {}));
 //# sourceMappingURL=Script.js.map
