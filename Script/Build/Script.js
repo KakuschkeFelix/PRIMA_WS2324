@@ -87,14 +87,14 @@ var Script;
     }
     async function createPCCar(graph, track, offset, playerOne) {
         const color = playerOne ? Script.PLAYER_ONE_COLOR : Script.PLAYER_TWO_COLOR;
-        pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), new Script.FrictionHandler(track, offset), client);
+        pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), new Script.TrackHandler(track, offset), client);
         await pcCar.initializeAnimation();
         graph.addChild(pcCar);
         cars.push(pcCar);
     }
     async function createNPCCar(graph, track, offset, playerOne) {
         const color = playerOne ? Script.PLAYER_TWO_COLOR : Script.PLAYER_ONE_COLOR;
-        const car = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.FrictionHandler(track, offset), client);
+        const car = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.TrackHandler(track, offset), client);
         await car.initializeAnimation();
         graph.addChild(car);
         cars.push(car);
@@ -168,17 +168,17 @@ var Script;
     class Car extends fudgeAid.NodeSprite {
         color;
         handler;
-        frictionHandler;
+        trackHandler;
         client;
         speed = fudge.Vector3.ZERO();
         acceleration = fudge.Vector3.ZERO();
         position;
         rotation;
-        constructor(color, position, handler, frictionHandler, client) {
+        constructor(color, position, handler, trackHandler, client) {
             super(color);
             this.color = color;
             this.handler = handler;
-            this.frictionHandler = frictionHandler;
+            this.trackHandler = trackHandler;
             this.client = client;
             this.addComponent(new fudge.ComponentTransform());
             this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
@@ -221,9 +221,14 @@ var Script;
             if (this.speed.magnitude / timeDeltaSeconds < Script.CAR_MIN_SPEED) {
                 this.speed = fudge.Vector3.ZERO();
             }
-            const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
+            const friction = this.trackHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
             this.speed.scale(friction);
+            const oldPosition = this.mtxLocal.translation.clone;
             this.mtxLocal.translate(this.speed, false);
+            const newPosition = new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z);
+            if (this.trackHandler.isOutOfBounds(newPosition)) {
+                this.mtxLocal.translation = oldPosition;
+            }
         }
         calculateRotationFrame(carY) {
             const frame = (Script.CAR_CENTER_FRAME + Math.round((-carY - this.rotation) / Script.CAR_FRAME_ANGLE_DIFF)) % (Script.CAR_FRAMES_LEFT + Script.CAR_FRAMES_RIGHT + 1);
@@ -420,34 +425,6 @@ var Script;
 var Script;
 (function (Script) {
     var fudge = FudgeCore;
-    class FrictionHandler {
-        track;
-        offset;
-        defaultFriction;
-        constructor(track, offset) {
-            this.track = track;
-            this.offset = offset;
-            this.defaultFriction = new Script.TileGrass().friction();
-        }
-        getFrictionAt(position) {
-            const tilePosition = this.getTilePosition(position);
-            const tile = this.track[tilePosition.y]?.[tilePosition.x];
-            if (tile) {
-                return tile.friction();
-            }
-            return this.defaultFriction;
-        }
-        getTilePosition(position) {
-            const tilePosition = new fudge.Vector2(Math.floor((position.x - this.offset.x) / Script.TILE_WIDTH) + this.offset.x, Math.floor((position.y - this.offset.y - 0.5) / Script.TILE_WIDTH) + this.offset.y);
-            tilePosition.scale(-1);
-            return tilePosition;
-        }
-    }
-    Script.FrictionHandler = FrictionHandler;
-})(Script || (Script = {}));
-var Script;
-(function (Script) {
-    var fudge = FudgeCore;
     class TrackBuilder {
         buildTrack(track, offset) {
             const trackGraph = new fudge.Node("TrackAbc");
@@ -471,6 +448,38 @@ var Script;
         }
     }
     Script.TrackBuilder = TrackBuilder;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class TrackHandler {
+        track;
+        offset;
+        defaultFriction;
+        constructor(track, offset) {
+            this.track = track;
+            this.offset = offset;
+            this.defaultFriction = new Script.TileGrass().friction();
+        }
+        getFrictionAt(position) {
+            const tilePosition = this.getTilePosition(position);
+            const tile = this.track[tilePosition.y]?.[tilePosition.x];
+            if (tile) {
+                return tile.friction();
+            }
+            return this.defaultFriction;
+        }
+        getTilePosition(position) {
+            const tilePosition = new fudge.Vector2(Math.floor((position.x - this.offset.x) / Script.TILE_WIDTH) + this.offset.x, Math.floor((position.y - this.offset.y - 0.5) / Script.TILE_WIDTH) + this.offset.y);
+            tilePosition.scale(-1);
+            return tilePosition;
+        }
+        isOutOfBounds(position) {
+            const tilePosition = this.getTilePosition(position);
+            return !this.track[tilePosition.y]?.[tilePosition.x];
+        }
+    }
+    Script.TrackHandler = TrackHandler;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

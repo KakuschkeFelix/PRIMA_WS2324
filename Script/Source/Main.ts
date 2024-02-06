@@ -58,7 +58,7 @@ namespace Script {
 
   async function createPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, playerOne: boolean): Promise<void> {
     const color = playerOne ? PLAYER_ONE_COLOR : PLAYER_TWO_COLOR;
-    pcCar = new Car(color, CAR_POSITIONS[color], new KeyboardHandler(), new FrictionHandler(track, offset), client);
+    pcCar = new Car(color, CAR_POSITIONS[color], new KeyboardHandler(), new TrackHandler(track, offset), client);
     await pcCar.initializeAnimation();
     graph.addChild(pcCar);
     cars.push(pcCar)
@@ -66,7 +66,7 @@ namespace Script {
 
   async function createNPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, playerOne: boolean): Promise<void> {
     const color = playerOne ? PLAYER_TWO_COLOR : PLAYER_ONE_COLOR;
-    const car = new Car(color, CAR_POSITIONS[color], new AIHandler(), new FrictionHandler(track, offset), client);
+    const car = new Car(color, CAR_POSITIONS[color], new AIHandler(), new TrackHandler(track, offset), client);
     await car.initializeAnimation();
     graph.addChild(car);
     cars.push(car);

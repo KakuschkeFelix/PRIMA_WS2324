@@ -25,13 +25,13 @@ declare namespace Script {
     class Car extends fudgeAid.NodeSprite {
         color: CarColor;
         handler: HandlerBase;
-        private frictionHandler;
+        private trackHandler;
         private client;
         speed: fudge.Vector3;
         acceleration: fudge.Vector3;
         position: fudge.Vector2;
         rotation: number;
-        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, frictionHandler: FrictionHandler, client: NetworkClient);
+        constructor(color: CarColor, position: fudge.Vector2, handler: HandlerBase, trackHandler: TrackHandler, client: NetworkClient);
         update(_cameraTranslation: fudge.Vector3, timeDeltaSeconds: number, idle?: boolean, otherPlayer?: boolean): void;
         move(transformation: [number, number], timeDeltaSeconds: number): void;
         calculateRotationFrame(carY: number): number;
@@ -96,20 +96,21 @@ declare namespace Script {
 }
 declare namespace Script {
     import fudge = FudgeCore;
-    class FrictionHandler {
+    class TrackBuilder {
+        buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
+        buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class TrackHandler {
         private track;
         private offset;
         defaultFriction: number;
         constructor(track: Track, offset: fudge.Vector2);
         getFrictionAt(position: fudge.Vector2): number;
         private getTilePosition;
-    }
-}
-declare namespace Script {
-    import fudge = FudgeCore;
-    class TrackBuilder {
-        buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
-        buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
+        isOutOfBounds(position: fudge.Vector2): boolean;
     }
 }
 declare namespace Script {

@@ -8,7 +8,7 @@ namespace Script {
             position: fudge.Vector2;
             rotation: number;
 
-            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private frictionHandler: FrictionHandler, private client: NetworkClient) {
+            constructor(public color: CarColor, position: fudge.Vector2, public handler: HandlerBase, private trackHandler: TrackHandler, private client: NetworkClient) {
                   super(color);
                   this.addComponent(new fudge.ComponentTransform());
                   this.mtxLocal.translate(new fudge.Vector3(position.x, 0, position.y));
@@ -58,11 +58,18 @@ namespace Script {
                         this.speed = fudge.Vector3.ZERO();
                   }
 
-                  const friction = this.frictionHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
+                  const friction = this.trackHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
 
                   this.speed.scale(friction);
-                  
+
+                  const oldPosition = this.mtxLocal.translation.clone;
+
                   this.mtxLocal.translate(this.speed, false);
+
+                  const newPosition = new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z);
+                  if (this.trackHandler.isOutOfBounds(newPosition)) {
+                        this.mtxLocal.translation = oldPosition;
+                  }
             }
 
             calculateRotationFrame(carY: number): number {
