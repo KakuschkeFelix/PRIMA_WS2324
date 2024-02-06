@@ -10,6 +10,10 @@ namespace Script {
 
   let client: NetworkClient;
   document.addEventListener("interactiveViewportStarted", (event: any) => start(event));
+  document.addEventListener('startClick', async (event) => {
+    client = new NetworkClient();
+    await client.connect((event as CustomEvent).detail);
+});
 
   async function start(_event: CustomEvent): Promise<void> {
     viewport = _event.detail;
@@ -19,9 +23,7 @@ namespace Script {
     
     const {node: trackNode, offset: trackOffset} = buildTrack();
     graph.appendChild(trackNode);
-    
-    client = new NetworkClient();
-    await client.connect();
+
     const others = await client.getOtherCars();
     
     let color: CarColor;

@@ -1,9 +1,14 @@
 {
       "scripts": {
             "build": "tsc -p Script/Source/tsconfig.json",
-            "watch": "tsc -w -p Script/Source/tsconfig.json"
+            "watch": "tsc -w -p Script/Source/tsconfig.json",
+            "start:server": "node Server/Main.js",
+            "build:server": "tsc Server/Main.ts"
       },
       "dependencies": {
             "ws": "^8.16.0"
+      },
+      "devDependencies": {
+            "@types/node": "^20.11.16"
       }
 }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>PRIMA_WS2324</title>
+<title>Furtwangen Drift</title>
 <meta charset="utf-8" />
 <link rel="stylesheet" href="styles.css" />
 
@@ -27,14 +27,14 @@
 
 </head>
 <body>
-<!--Dialog shown at startup only-->
-<dialog>
-<p>FUDGE Autoview</p>
-<h1>Title (will be replaced by Autoview)</h1>
-<p>click to start</p>
-</dialog>
-<!--Canvas for FUDGE to render to-->
-<canvas class="fullscreen">
-</canvas>
+      <dialog>
+            <p>FUDGE Autoview</p>
+            <h1>Title (will be replaced by Autoview)</h1>
+            <input type="url" id="serverAddress" placeholder="ws://address:port" pattern="wss://.*:[0-9]+|ws://.*:[0-9]+" required>
+            <span class="error" id="serverAddressError"></span>
+            <button id="start">Start</button>
+      </dialog>
+      <canvas class="fullscreen">
+      </canvas>
 </body>
 </html>

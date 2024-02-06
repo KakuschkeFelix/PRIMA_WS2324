@@ -47,13 +47,15 @@ var Script;
     let track;
     let client;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
+    document.addEventListener('startClick', async (event) => {
+        client = new Script.NetworkClient();
+        await client.connect(event.detail);
+    });
     async function start(_event) {
         viewport = _event.detail;
         const graph = viewport.getBranch();
         const { node: trackNode, offset: trackOffset } = buildTrack();
         graph.appendChild(trackNode);
-        client = new Script.NetworkClient();
-        await client.connect();
         const others = await client.getOtherCars();
         let color;
         if (others.length > 0) {
@@ -319,8 +321,8 @@ var Script;
         constructor() {
             this.client = new fudgeNet.FudgeClient();
         }
-        async connect() {
-            this.client.connectToServer("ws://localhost:4000");
+        async connect(address) {
+            this.client.connectToServer(address);
             await this.makeNetworkCall(5000, 100, () => {
                 if (this.client.id !== undefined) {
                     this.id = this.client.id;

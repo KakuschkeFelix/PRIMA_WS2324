@@ -85,7 +85,7 @@ declare namespace Script {
         lastPosition: fudge.Vector3;
         lastRotation: number;
         constructor();
-        connect(): Promise<void>;
+        connect(address: string): Promise<void>;
         getOtherCars(): Promise<string[]>;
         pingPlayerOne(target: string): Promise<void>;
         private makeNetworkCall;

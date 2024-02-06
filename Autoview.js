@@ -17,18 +17,76 @@
 
 var ƒ = FudgeCore;
 var ƒAid = FudgeAid;
+var fudgeNet = FudgeNet;
 window.addEventListener("load", init);
 
 // show dialog for startup, user interaction required e.g. for starting audio
 function init(_event)/* : void */ {
   let dialog/* : HTMLDialogElement */ = document.querySelector("dialog");
   dialog.querySelector("h1").textContent = document.title;
-  dialog.addEventListener("click", function (_event) {
+  const button = dialog.querySelector("button#start");
+  const serverAddressInput = dialog.querySelector("input#serverAddress");
+  const serverAddressError = dialog.querySelector("span#serverAddressError");
+  if (!serverAddressInput || !serverAddressError || !button) {
+    alert("Invalid dialog setup");
+    return;
+  }
+
+  serverAddressInput.addEventListener("input", function (_event) {
+    if (!serverAddressInput.checkValidity()) {
+      serverAddressError.textContent = "Please enter a valid server address";
+    } else {
+      serverAddressError.textContent = "";
+    }
+  });
+  button.addEventListener("click", async function (_event) {
+    if (!serverAddressInput?.checkValidity()) {
+      alert("Please enter a valid server address");
+      return;
+    }
+    const client = await checkConnection(serverAddressInput.value).catch(() => undefined);
+    if (!client) {
+      serverAddressError.textContent = "Could not connect to server";
+      return;
+    }
+    dialog.style.display = "none";
     dialog.close();
+    client.socket.close();
+    button.dispatchEvent(new CustomEvent("startClick", { bubbles: true, detail: serverAddressInput.value}));
     let graphId/* : string */ = document.head.querySelector("meta[autoView]").getAttribute("autoView");
     startInteractiveViewport(graphId);
   });
   dialog.showModal();
+}
+
+/**
+ * checks the connection to the server
+ * @param {string} address 
+ * @returns {Promise<fudgeNet.FudgeClient>}
+ */
+async function checkConnection(address) {
+  const client = new fudgeNet.FudgeClient();
+  client.connectToServer(address);
+
+  const maxAttempts = 10;
+  let attempts = 0;
+
+  return new Promise((resolve, reject) => {
+        const intervalId = setInterval(() => {
+              attempts++;
+
+              const result = client.id;
+
+              if (result !== undefined) {
+                    clearInterval(intervalId);
+                    resolve(client);
+              } else if (attempts >= maxAttempts) {
+                    clearInterval(intervalId);
+                    reject(new Error('Unable to get result within 1 second'));
+              }
+        }, 100);
+  });
+
 }
 
 // setup and start interactive viewport

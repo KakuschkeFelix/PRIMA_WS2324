@@ -13,8 +13,8 @@ namespace Script {
                   this.client = new fudgeNet.FudgeClient();
             }
 
-            public async connect(): Promise<void> {
-                  this.client.connectToServer("ws://localhost:4000");
+            public async connect(address: string): Promise<void> {
+                  this.client.connectToServer(address);
 
                   await this.makeNetworkCall(5000, 100, () => {
                         if (this.client.id !== undefined) {
