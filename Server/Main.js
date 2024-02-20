@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var FudgeServer_js_1 = require("../FudgeNet/Server/FudgeServer.js");
+var FudgeServer_js_1 = require("../Runtime/Net/Server/FudgeServer.js");
 var process_1 = require("process");
 var args = process_1.argv;
 var port = 4000;

@@ -1,4 +1,4 @@
-import { FudgeServer } from "../FudgeNet/Server/FudgeServer.js";
+import { FudgeServer } from "../Runtime/Net/Server/FudgeServer.js";
 import { argv } from "process";
 
 let args = argv;
