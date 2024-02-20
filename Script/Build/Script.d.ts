@@ -16,7 +16,7 @@ declare namespace Script {
         constructor(position: fudge.Vector3, viewport: fudge.Viewport);
         get position(): fudge.Vector3;
         set position(_position: fudge.Vector3);
-        follow(car: Car, lerpFactor?: number): void;
+        follow(car: Car, lerpFactor: number): void;
     }
 }
 declare namespace Script {
@@ -71,10 +71,6 @@ declare namespace Script {
     const CAR_POSITIONS: Record<CarColor, fudge.Vector2>;
     const CAR_MIN_ANGLE = 10;
     const CAR_MAX_ANGLE = 70;
-    const CAR_MAX_SPEED = 20;
-    const CAR_ACCERLATION = 0.2;
-    const CAR_MIN_SPEED = 0.1;
-    const CAR_TURN_SPEED = 200;
 }
 declare namespace Script {
     import fudge = FudgeCore;
@@ -92,6 +88,31 @@ declare namespace Script {
     import fudge = FudgeCore;
     class KeyboardHandler implements HandlerBase {
         nextAction(_position: fudge.Vector3, _rotation: number, _client: NetworkClient): [number, number];
+    }
+}
+declare namespace Script {
+    type FurtwangenDriftConfig = {
+        MAX_ROUNDS: number;
+        FRICTION: {
+            GRASS: number;
+            TRACK: number;
+        };
+        CAR: {
+            MAX_SPEED: number;
+            MIN_SPEED: number;
+            ACCERLATION: number;
+            TURN_SPEED: number;
+        };
+        CAMERA: {
+            LERP_FACTOR: number;
+        };
+    };
+    class ConfigLoader {
+        config: FurtwangenDriftConfig;
+        private static instance;
+        private constructor();
+        static getInstance(): ConfigLoader;
+        loadConfig(): Promise<void>;
     }
 }
 declare namespace Script {
@@ -177,7 +198,6 @@ declare namespace Script {
 }
 declare namespace Script {
     const TILE_WIDTH = 2;
-    const MAX_ROUNDS = 3;
     type Track = Tile[][];
 }
 declare namespace Script {

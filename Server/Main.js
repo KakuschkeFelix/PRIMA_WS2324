@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var FudgeServer_js_1 = require("../FudgeNet/Server/FudgeServer.js");
 var process_1 = require("process");
 var args = process_1.argv;
-var port = 4000;
+var config = await fetch("./config.json").then(function (response) { return response.json(); });
+var port = config.SERVER.PORT;
 for (var i = 0; i < args.length; i++) {
     if (args[i] === '--port' || args[i] === '-p') {
         if (i + 1 < args.length && !isNaN(Number(args[i + 1]))) {

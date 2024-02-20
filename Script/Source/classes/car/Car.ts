@@ -33,7 +33,7 @@ namespace Script {
             move(transformation: [number, number], timeDeltaSeconds: number): void {
                   // Only allow rotation if the car is moving
                   if (this.speed.magnitude > 0) {
-                        this.rotation += transformation[1] * CAR_TURN_SPEED * timeDeltaSeconds;
+                        this.rotation += transformation[1] * ConfigLoader.getInstance().config.CAR.TURN_SPEED * timeDeltaSeconds;
                   }
                   
                   const mtxClone = this.mtxLocal.clone;
@@ -42,7 +42,7 @@ namespace Script {
                   // Acceleration
                   if (transformation[0] !== 0) {
                         this.acceleration = mtxClone.forward;
-                        this.acceleration.scale(transformation[0] * CAR_ACCERLATION * timeDeltaSeconds);
+                        this.acceleration.scale(transformation[0] * ConfigLoader.getInstance().config.CAR.ACCERLATION * timeDeltaSeconds);
                   } else {
                         // Coasting
                         this.acceleration = new fudge.Vector3(0, 0, 0);
@@ -50,11 +50,11 @@ namespace Script {
                   
                   this.speed.add(this.acceleration);
                   
-                  if (this.speed.magnitude / timeDeltaSeconds > CAR_MAX_SPEED) {
-                        this.speed.normalize(CAR_MAX_SPEED * timeDeltaSeconds);
+                  if (this.speed.magnitude / timeDeltaSeconds > ConfigLoader.getInstance().config.CAR.MAX_SPEED) {
+                        this.speed.normalize(ConfigLoader.getInstance().config.CAR.MAX_SPEED * timeDeltaSeconds);
                   }
 
-                  if (this.speed.magnitude / timeDeltaSeconds < CAR_MIN_SPEED) {
+                  if (this.speed.magnitude / timeDeltaSeconds < ConfigLoader.getInstance().config.CAR.MIN_SPEED) {
                         this.speed = fudge.Vector3.ZERO();
                   }
 

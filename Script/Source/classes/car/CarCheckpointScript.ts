@@ -58,7 +58,7 @@ namespace Script {
 
         public async setupAudio(): Promise<void> {
           this.cmpAudio = new fudgeCore.ComponentAudio();
-          this.cmpAudio.volume = 0.5;
+          this.cmpAudio.volume = 0.8;
           this.node.addComponent(this.cmpAudio);
           this.cmpListener = new fudgeCore.ComponentAudioListener();
           this.node.addComponent(this.cmpListener);

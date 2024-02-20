@@ -18,10 +18,4 @@ namespace Script {
 
       export const CAR_MIN_ANGLE = 10; // 10
       export const CAR_MAX_ANGLE = 70; // 70
-
-      export const CAR_MAX_SPEED = 20;
-      export const CAR_ACCERLATION = 0.2;
-      export const CAR_MIN_SPEED = 0.1;
-
-      export const CAR_TURN_SPEED = 200;
 }

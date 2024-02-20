@@ -25,8 +25,10 @@ namespace Script {
     
     const graph = viewport.getBranch();
 
+    await ConfigLoader.getInstance().loadConfig();
+
     ui = new VUIHandler();
-    ui.maxRounds = MAX_ROUNDS;
+    ui.maxRounds = ConfigLoader.getInstance().config.MAX_ROUNDS;
     
     const {node: trackNode, offset: trackOffset, borderNode} = buildTrack();
     graph.appendChild(trackNode);
@@ -53,6 +55,8 @@ namespace Script {
       client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
       client.lastRotation = rot;
     }
+
+    
 
     const cameraPos = CAR_POSITIONS[color].toVector3();
     cameraPos.z = cameraPos.y - 1.5;
@@ -116,12 +120,12 @@ namespace Script {
     cars.forEach(car => {
       car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, stopRace, car.color !== pcCar.color);
     });
-    camera.follow(pcCar);
+    camera.follow(pcCar, ConfigLoader.getInstance().config.CAMERA.LERP_FACTOR);
     if (!stopRace) {
       pcCheckpointHandler.checkCheckpoint();
       ui.increaseTime(timeDeltaSeconds);
       ui.rounds = pcCheckpointHandler.currentRound;
-      if (pcCheckpointHandler.currentRound >= MAX_ROUNDS) {
+      if (pcCheckpointHandler.currentRound >= ConfigLoader.getInstance().config.MAX_ROUNDS) {
         raceOver = true;
         await client.sendRaceOver();
         ui.showWinner(true);

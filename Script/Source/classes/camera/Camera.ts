@@ -17,7 +17,7 @@ namespace Script {
               this.cmp.mtxPivot.translation = _position;
           }
 
-        public follow(car: Car, lerpFactor: number = 0.2): void {
+        public follow(car: Car, lerpFactor: number): void {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
             const distance = 2; // distance from the car

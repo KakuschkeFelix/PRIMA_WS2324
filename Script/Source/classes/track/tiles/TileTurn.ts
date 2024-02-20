@@ -88,7 +88,7 @@ namespace Script {
             }
 
             friction(): number {
-                  return 0.975;
+                  return ConfigLoader.getInstance().config.FRICTION.TRACK;
             }
       }
 }

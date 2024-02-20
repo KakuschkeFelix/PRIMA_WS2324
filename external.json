@@ -1,0 +1,16 @@
+{
+    "MAX_ROUNDS": 3,
+    "FRICTION": {
+        "GRASS": 0.92,
+        "TRACK": 0.975
+    },
+    "CAR": {
+        "MAX_SPEED": 20,
+        "MIN_SPEED": 0.1,
+        "ACCERLATION": 0.2,
+        "TURN_SPEED": 200
+    },
+    "CAMERA": {
+        "LERP_FACTOR": 0.2
+    }
+}

@@ -29,7 +29,7 @@ namespace Script {
             }
 
             friction(): number {
-                  return 0.92;
+                  return ConfigLoader.getInstance().config.FRICTION.GRASS;
             }
       }
 }

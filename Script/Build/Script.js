@@ -58,8 +58,9 @@ var Script;
     async function start(_event) {
         viewport = _event.detail;
         const graph = viewport.getBranch();
+        await Script.ConfigLoader.getInstance().loadConfig();
         ui = new Script.VUIHandler();
-        ui.maxRounds = Script.MAX_ROUNDS;
+        ui.maxRounds = Script.ConfigLoader.getInstance().config.MAX_ROUNDS;
         const { node: trackNode, offset: trackOffset, borderNode } = buildTrack();
         graph.appendChild(trackNode);
         graph.appendChild(borderNode);
@@ -140,12 +141,12 @@ var Script;
         cars.forEach(car => {
             car.update(camera.cmp.mtxPivot.translation, timeDeltaSeconds, stopRace, car.color !== pcCar.color);
         });
-        camera.follow(pcCar);
+        camera.follow(pcCar, Script.ConfigLoader.getInstance().config.CAMERA.LERP_FACTOR);
         if (!stopRace) {
             pcCheckpointHandler.checkCheckpoint();
             ui.increaseTime(timeDeltaSeconds);
             ui.rounds = pcCheckpointHandler.currentRound;
-            if (pcCheckpointHandler.currentRound >= Script.MAX_ROUNDS) {
+            if (pcCheckpointHandler.currentRound >= Script.ConfigLoader.getInstance().config.MAX_ROUNDS) {
                 raceOver = true;
                 await client.sendRaceOver();
                 ui.showWinner(true);
@@ -178,7 +179,7 @@ var Script;
         set position(_position) {
             this.cmp.mtxPivot.translation = _position;
         }
-        follow(car, lerpFactor = 0.2) {
+        follow(car, lerpFactor) {
             const carPos = car.mtxLocal.translation;
             const cameraPos = this.cmp.mtxPivot.translation;
             const distance = 2; // distance from the car
@@ -234,24 +235,24 @@ var Script;
         move(transformation, timeDeltaSeconds) {
             // Only allow rotation if the car is moving
             if (this.speed.magnitude > 0) {
-                this.rotation += transformation[1] * Script.CAR_TURN_SPEED * timeDeltaSeconds;
+                this.rotation += transformation[1] * Script.ConfigLoader.getInstance().config.CAR.TURN_SPEED * timeDeltaSeconds;
             }
             const mtxClone = this.mtxLocal.clone;
             mtxClone.rotation = new fudge.Vector3(0, -this.rotation, 0);
             // Acceleration
             if (transformation[0] !== 0) {
                 this.acceleration = mtxClone.forward;
-                this.acceleration.scale(transformation[0] * Script.CAR_ACCERLATION * timeDeltaSeconds);
+                this.acceleration.scale(transformation[0] * Script.ConfigLoader.getInstance().config.CAR.ACCERLATION * timeDeltaSeconds);
             }
             else {
                 // Coasting
                 this.acceleration = new fudge.Vector3(0, 0, 0);
             }
             this.speed.add(this.acceleration);
-            if (this.speed.magnitude / timeDeltaSeconds > Script.CAR_MAX_SPEED) {
-                this.speed.normalize(Script.CAR_MAX_SPEED * timeDeltaSeconds);
+            if (this.speed.magnitude / timeDeltaSeconds > Script.ConfigLoader.getInstance().config.CAR.MAX_SPEED) {
+                this.speed.normalize(Script.ConfigLoader.getInstance().config.CAR.MAX_SPEED * timeDeltaSeconds);
             }
-            if (this.speed.magnitude / timeDeltaSeconds < Script.CAR_MIN_SPEED) {
+            if (this.speed.magnitude / timeDeltaSeconds < Script.ConfigLoader.getInstance().config.CAR.MIN_SPEED) {
                 this.speed = fudge.Vector3.ZERO();
             }
             const friction = this.trackHandler.getFrictionAt(new fudge.Vector2(this.mtxLocal.translation.x, this.mtxLocal.translation.z));
@@ -340,7 +341,7 @@ var Script;
         }
         async setupAudio() {
             this.cmpAudio = new fudgeCore.ComponentAudio();
-            this.cmpAudio.volume = 0.5;
+            this.cmpAudio.volume = 0.8;
             this.node.addComponent(this.cmpAudio);
             this.cmpListener = new fudgeCore.ComponentAudioListener();
             this.node.addComponent(this.cmpListener);
@@ -380,10 +381,6 @@ var Script;
     };
     Script.CAR_MIN_ANGLE = 10; // 10
     Script.CAR_MAX_ANGLE = 70; // 70
-    Script.CAR_MAX_SPEED = 20;
-    Script.CAR_ACCERLATION = 0.2;
-    Script.CAR_MIN_SPEED = 0.1;
-    Script.CAR_TURN_SPEED = 200;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -418,6 +415,25 @@ var Script;
         }
     }
     Script.KeyboardHandler = KeyboardHandler;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class ConfigLoader {
+        config;
+        static instance;
+        constructor() { }
+        static getInstance() {
+            if (!ConfigLoader.instance) {
+                ConfigLoader.instance = new ConfigLoader();
+            }
+            return ConfigLoader.instance;
+        }
+        async loadConfig() {
+            const response = await fetch("./external.json");
+            this.config = await response.json();
+        }
+    }
+    Script.ConfigLoader = ConfigLoader;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -701,7 +717,6 @@ var Script;
 var Script;
 (function (Script) {
     Script.TILE_WIDTH = 2;
-    Script.MAX_ROUNDS = 3;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {
@@ -782,7 +797,7 @@ var Script;
             this.mtxLocal.translate(position);
         }
         friction() {
-            return 0.92;
+            return Script.ConfigLoader.getInstance().config.FRICTION.GRASS;
         }
     }
     Script.TileGrass = TileGrass;
@@ -834,7 +849,7 @@ var Script;
             this.mtxLocal.translation = translation;
         }
         friction() {
-            return 0.975;
+            return Script.ConfigLoader.getInstance().config.FRICTION.TRACK;
         }
     }
     Script.TileStraight = TileStraight;
@@ -919,7 +934,7 @@ var Script;
             this.mtxLocal.translation = translation;
         }
         friction() {
-            return 0.975;
+            return Script.ConfigLoader.getInstance().config.FRICTION.TRACK;
         }
     }
     Script.TileTurn = TileTurn;
