@@ -11,6 +11,13 @@ namespace Script {
         public currentRound: number = 0;
 
         public trackHandler: TrackHandler;
+
+        public cmpAudio: fudgeCore.ComponentAudio;
+        public cmpListener: fudgeCore.ComponentAudioListener;
+
+        public roundSound: Sound;
+        public defeatSound: Sound;
+        public victorySound: Sound;
         
         constructor() {
           super();
@@ -23,10 +30,14 @@ namespace Script {
           this.addEventListener(fudgeCore.EVENT.COMPONENT_ADD, this.hndEvent);
           this.addEventListener(fudgeCore.EVENT.COMPONENT_REMOVE, this.hndEvent);
           this.addEventListener(fudgeCore.EVENT.NODE_DESERIALIZED, this.hndEvent);
+
+          this.roundSound = new Sound(new RoundSound());
+          this.defeatSound = new Sound(new DefeatSound());
+          this.victorySound = new Sound(new VictorySound());
         }
     
         // Activate the functions of this component as response to events
-        public hndEvent = (_event: Event): void => {
+        public hndEvent = async (_event: Event): Promise<void> => {
           switch (_event.type) {
             case fudgeCore.EVENT.COMPONENT_ADD:
               break;
@@ -35,7 +46,6 @@ namespace Script {
               this.removeEventListener(fudgeCore.EVENT.COMPONENT_REMOVE, this.hndEvent);
               break;
             case fudgeCore.EVENT.NODE_DESERIALIZED:
-              // if deserialized the node is now fully reconstructed and access to all its components and children is possible
               break;
           }
         }
@@ -46,16 +56,28 @@ namespace Script {
           this.checkpoints = [...checkpoints, startPos];
         }
 
+        public async setupAudio(): Promise<void> {
+          this.cmpAudio = new fudgeCore.ComponentAudio();
+          this.cmpAudio.volume = 0.5;
+          this.node.addComponent(this.cmpAudio);
+          this.cmpListener = new fudgeCore.ComponentAudioListener();
+          this.node.addComponent(this.cmpListener);
+
+          await this.roundSound.loadSound();
+          await this.defeatSound.loadSound();
+          await this.victorySound.loadSound();
+        }
+
         public checkCheckpoint(): void {
           const carPosition = this.node.mtxLocal.translation.clone;
           const checkpointPosition = this.trackHandler.getTilePosition(new fudgeCore.Vector2(carPosition.x, carPosition.z));
-          console.log(checkpointPosition.toString());
 
           if (this.currentCheckpoint < this.checkpoints.length) {
             if (this.checkpoints[this.currentCheckpoint].equals(checkpointPosition)) {
               this.currentCheckpoint++;
             }
           } else {
+            this.roundSound.playSound(this.cmpAudio);
             this.currentRound++;
             this.currentCheckpoint = 0;
           }

@@ -99,6 +99,8 @@ var Script;
         pcCheckpointHandler = pcCar.getComponent(Script.CarCheckpointScript);
         pcCheckpointHandler.trackHandler = trackHandler;
         pcCheckpointHandler.setupCheckpoints(checkpoints);
+        await pcCheckpointHandler.setupAudio();
+        fudge.AudioManager.default.listenWith(pcCheckpointHandler.cmpListener);
         await pcCar.initializeAnimation();
         graph.addChild(pcCar);
         cars.push(pcCar);
@@ -147,11 +149,13 @@ var Script;
                 raceOver = true;
                 await client.sendRaceOver();
                 ui.showWinner(true);
+                pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
             }
             else {
                 raceOver = client.raceOver;
                 if (raceOver) {
                     ui.showWinner(false);
+                    pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
                 }
             }
         }
@@ -298,6 +302,11 @@ var Script;
         currentCheckpoint = 0;
         currentRound = 0;
         trackHandler;
+        cmpAudio;
+        cmpListener;
+        roundSound;
+        defeatSound;
+        victorySound;
         constructor() {
             super();
             // Don't start when running in editor
@@ -307,9 +316,12 @@ var Script;
             this.addEventListener("componentAdd" /* fudgeCore.EVENT.COMPONENT_ADD */, this.hndEvent);
             this.addEventListener("componentRemove" /* fudgeCore.EVENT.COMPONENT_REMOVE */, this.hndEvent);
             this.addEventListener("nodeDeserialized" /* fudgeCore.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+            this.roundSound = new Script.Sound(new Script.RoundSound());
+            this.defeatSound = new Script.Sound(new Script.DefeatSound());
+            this.victorySound = new Script.Sound(new Script.VictorySound());
         }
         // Activate the functions of this component as response to events
-        hndEvent = (_event) => {
+        hndEvent = async (_event) => {
             switch (_event.type) {
                 case "componentAdd" /* fudgeCore.EVENT.COMPONENT_ADD */:
                     break;
@@ -318,7 +330,6 @@ var Script;
                     this.removeEventListener("componentRemove" /* fudgeCore.EVENT.COMPONENT_REMOVE */, this.hndEvent);
                     break;
                 case "nodeDeserialized" /* fudgeCore.EVENT.NODE_DESERIALIZED */:
-                    // if deserialized the node is now fully reconstructed and access to all its components and children is possible
                     break;
             }
         };
@@ -327,16 +338,26 @@ var Script;
             startPos.scale(-1);
             this.checkpoints = [...checkpoints, startPos];
         }
+        async setupAudio() {
+            this.cmpAudio = new fudgeCore.ComponentAudio();
+            this.cmpAudio.volume = 0.5;
+            this.node.addComponent(this.cmpAudio);
+            this.cmpListener = new fudgeCore.ComponentAudioListener();
+            this.node.addComponent(this.cmpListener);
+            await this.roundSound.loadSound();
+            await this.defeatSound.loadSound();
+            await this.victorySound.loadSound();
+        }
         checkCheckpoint() {
             const carPosition = this.node.mtxLocal.translation.clone;
             const checkpointPosition = this.trackHandler.getTilePosition(new fudgeCore.Vector2(carPosition.x, carPosition.z));
-            console.log(checkpointPosition.toString());
             if (this.currentCheckpoint < this.checkpoints.length) {
                 if (this.checkpoints[this.currentCheckpoint].equals(checkpointPosition)) {
                     this.currentCheckpoint++;
                 }
             }
             else {
+                this.roundSound.playSound(this.cmpAudio);
                 this.currentRound++;
                 this.currentCheckpoint = 0;
             }
@@ -522,6 +543,63 @@ var Script;
         }
     }
     Script.NetworkClient = NetworkClient;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class DefeatSound {
+        audio;
+        path = "./Sounds/defeat.mp3";
+        async loadSound() {
+            this.audio = new fudge.Audio();
+            await this.audio.load(this.path);
+        }
+    }
+    Script.DefeatSound = DefeatSound;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class RoundSound {
+        audio;
+        path = "./Sounds/round.mp3";
+        async loadSound() {
+            this.audio = new fudge.Audio();
+            await this.audio.load(this.path);
+        }
+    }
+    Script.RoundSound = RoundSound;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    class Sound {
+        soundHandler;
+        constructor(soundHandler) {
+            this.soundHandler = soundHandler;
+        }
+        async loadSound() {
+            await this.soundHandler.loadSound();
+        }
+        playSound(audio) {
+            audio.setAudio(this.soundHandler.audio);
+            audio.connect(true);
+            audio.play(true);
+        }
+    }
+    Script.Sound = Sound;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var fudge = FudgeCore;
+    class VictorySound {
+        audio;
+        path = "./Sounds/victory.mp3";
+        async loadSound() {
+            this.audio = new fudge.Audio();
+            await this.audio.load(this.path);
+        }
+    }
+    Script.VictorySound = VictorySound;
 })(Script || (Script = {}));
 var Script;
 (function (Script) {

@@ -71,6 +71,8 @@ namespace Script {
     pcCheckpointHandler = pcCar.getComponent(CarCheckpointScript);
     pcCheckpointHandler.trackHandler = trackHandler;
     pcCheckpointHandler.setupCheckpoints(checkpoints);
+    await pcCheckpointHandler.setupAudio();
+    fudge.AudioManager.default.listenWith(pcCheckpointHandler.cmpListener);
     await pcCar.initializeAnimation();
     graph.addChild(pcCar);
     cars.push(pcCar)
@@ -123,10 +125,12 @@ namespace Script {
         raceOver = true;
         await client.sendRaceOver();
         ui.showWinner(true);
+        pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
       } else {
         raceOver = client.raceOver;
         if (raceOver) {
           ui.showWinner(false);
+          pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
         }
       }
     }

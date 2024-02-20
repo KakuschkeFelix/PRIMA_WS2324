@@ -47,9 +47,15 @@ declare namespace Script {
         private currentCheckpoint;
         currentRound: number;
         trackHandler: TrackHandler;
+        cmpAudio: fudgeCore.ComponentAudio;
+        cmpListener: fudgeCore.ComponentAudioListener;
+        roundSound: Sound;
+        defeatSound: Sound;
+        victorySound: Sound;
         constructor();
-        hndEvent: (_event: Event) => void;
+        hndEvent: (_event: Event) => Promise<void>;
         setupCheckpoints(checkpoints: fudgeCore.Vector2[]): void;
+        setupAudio(): Promise<void>;
         checkCheckpoint(): void;
     }
 }
@@ -107,6 +113,43 @@ declare namespace Script {
         sendPosition(position: fudge.Vector3): Promise<void>;
         sendRotation(rotation: number): Promise<void>;
         sendRaceOver(): Promise<void>;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class DefeatSound implements SoundHandler {
+        audio: fudge.Audio;
+        private path;
+        loadSound(): Promise<void>;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class RoundSound implements SoundHandler {
+        audio: fudge.Audio;
+        private path;
+        loadSound(): Promise<void>;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    interface SoundHandler {
+        audio: fudge.Audio;
+        loadSound(): Promise<void>;
+    }
+    class Sound {
+        private soundHandler;
+        constructor(soundHandler: SoundHandler);
+        loadSound(): Promise<void>;
+        playSound(audio: fudge.ComponentAudio): void;
+    }
+}
+declare namespace Script {
+    import fudge = FudgeCore;
+    class VictorySound implements SoundHandler {
+        audio: fudge.Audio;
+        private path;
+        loadSound(): Promise<void>;
     }
 }
 declare namespace Script {
