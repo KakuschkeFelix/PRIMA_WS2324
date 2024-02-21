@@ -3,7 +3,7 @@ namespace Script {
 
     export class VictorySound implements SoundHandler {
         public audio: fudge.Audio;
-        private path: string = "./Sounds/victory.mp3";
+        private path: string = "./Assets/Sounds/victory.mp3";
 
         public async loadSound(): Promise<void> {
             this.audio = new fudge.Audio();

@@ -565,7 +565,7 @@ var Script;
     var fudge = FudgeCore;
     class DefeatSound {
         audio;
-        path = "./Sounds/defeat.mp3";
+        path = "./Assets/Sounds/defeat.mp3";
         async loadSound() {
             this.audio = new fudge.Audio();
             await this.audio.load(this.path);
@@ -578,7 +578,7 @@ var Script;
     var fudge = FudgeCore;
     class RoundSound {
         audio;
-        path = "./Sounds/round.mp3";
+        path = "./Assets/Sounds/round.mp3";
         async loadSound() {
             this.audio = new fudge.Audio();
             await this.audio.load(this.path);
@@ -609,7 +609,7 @@ var Script;
     var fudge = FudgeCore;
     class VictorySound {
         audio;
-        path = "./Sounds/victory.mp3";
+        path = "./Assets/Sounds/victory.mp3";
         async loadSound() {
             this.audio = new fudge.Audio();
             await this.audio.load(this.path);
