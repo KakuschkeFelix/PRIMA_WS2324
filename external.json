@@ -1,5 +1,5 @@
 {
-    "MAX_ROUNDS": 3,
+    "MAX_ROUNDS": 1,
     "FRICTION": {
         "GRASS": 0.92,
         "TRACK": 0.975

@@ -11,6 +11,9 @@ namespace Script {
   let checkpoints: fudge.Vector2[] = [];
   let ui: VUIHandler;
   let raceOver: boolean = false;
+  let winner: boolean;
+
+  let updateListener: EventListener;
 
   let client: NetworkClient;
   document.addEventListener("interactiveViewportStarted", (event: any) => start(event));
@@ -18,6 +21,10 @@ namespace Script {
     client = new NetworkClient();
     await client.connect((event as CustomEvent).detail);
 });
+  document.addEventListener('raceOver', (event) => {
+    raceOver = true;
+    winner = (event as CustomEvent).detail;
+  })
 
   async function start(_event: CustomEvent): Promise<void> {
     viewport = _event.detail;
@@ -108,6 +115,18 @@ namespace Script {
         allPlayersReady = true;
       }
     }
+    if (raceOver) {
+      console.log(winner);
+      if (winner) {
+        ui.showWinner(true);
+        pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
+      } else {
+        ui.showWinner(false);
+        pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
+      }
+      fudge.Loop.stop();
+      fudge.Loop.removeEventListener(fudge.EVENT.LOOP_FRAME, update);
+    }
     const stopRace = !allPlayersReady || raceOver;
     const timeDeltaSeconds: number = fudge.Loop.timeFrameGame / 1000;
     cars.forEach(car => {
@@ -119,16 +138,7 @@ namespace Script {
       ui.increaseTime(timeDeltaSeconds);
       ui.rounds = pcCheckpointHandler.currentRound;
       if (pcCheckpointHandler.currentRound >= ConfigLoader.getInstance().config.MAX_ROUNDS) {
-        raceOver = true;
-        await client.sendRaceOver();
-        ui.showWinner(true);
-        pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
-      } else {
-        raceOver = client.raceOver;
-        if (raceOver) {
-          ui.showWinner(false);
-          pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
-        }
+        await client.sendRaceOver(); 
       }
     }
     viewport.draw();

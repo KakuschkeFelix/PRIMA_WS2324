@@ -49,11 +49,17 @@ var Script;
     let checkpoints = [];
     let ui;
     let raceOver = false;
+    let winner;
+    let updateListener;
     let client;
     document.addEventListener("interactiveViewportStarted", (event) => start(event));
     document.addEventListener('startClick', async (event) => {
         client = new Script.NetworkClient();
         await client.connect(event.detail);
+    });
+    document.addEventListener('raceOver', (event) => {
+        raceOver = true;
+        winner = event.detail;
     });
     async function start(_event) {
         viewport = _event.detail;
@@ -126,6 +132,19 @@ var Script;
                 allPlayersReady = true;
             }
         }
+        if (raceOver) {
+            console.log(winner);
+            if (winner) {
+                ui.showWinner(true);
+                pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
+            }
+            else {
+                ui.showWinner(false);
+                pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
+            }
+            fudge.Loop.stop();
+            fudge.Loop.removeEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
+        }
         const stopRace = !allPlayersReady || raceOver;
         const timeDeltaSeconds = fudge.Loop.timeFrameGame / 1000;
         cars.forEach(car => {
@@ -137,17 +156,7 @@ var Script;
             ui.increaseTime(timeDeltaSeconds);
             ui.rounds = pcCheckpointHandler.currentRound;
             if (pcCheckpointHandler.currentRound >= Script.ConfigLoader.getInstance().config.MAX_ROUNDS) {
-                raceOver = true;
                 await client.sendRaceOver();
-                ui.showWinner(true);
-                pcCheckpointHandler.victorySound.playSound(pcCheckpointHandler.cmpAudio);
-            }
-            else {
-                raceOver = client.raceOver;
-                if (raceOver) {
-                    ui.showWinner(false);
-                    pcCheckpointHandler.defeatSound.playSound(pcCheckpointHandler.cmpAudio);
-                }
             }
         }
         viewport.draw();
@@ -503,7 +512,7 @@ var Script;
                     this.lastRotation = message.content.rotation;
                 }
                 if (message.content.raceOver) {
-                    this.raceOver = true;
+                    document.dispatchEvent(new CustomEvent('raceOver', { detail: false }));
                 }
             }
         }
@@ -546,6 +555,7 @@ var Script;
                 idSource: this.id,
                 idTarget: [...this.peers][0],
             });
+            document.dispatchEvent(new CustomEvent('raceOver', { detail: true }));
         }
     }
     Script.NetworkClient = NetworkClient;

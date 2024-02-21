@@ -86,7 +86,7 @@ namespace Script {
                               this.lastRotation = message.content.rotation;
                         }
                         if (message.content.raceOver) {
-                              this.raceOver = true;
+                              document.dispatchEvent(new CustomEvent('raceOver', { detail: false }));
                         }
                   }
             }
@@ -128,7 +128,8 @@ namespace Script {
                         },
                         idSource: this.id,
                         idTarget: [...this.peers][0],
-                  })
+                  });
+                  document.dispatchEvent(new CustomEvent('raceOver', { detail: true }));
             }
       }
 }
