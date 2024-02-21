@@ -61,31 +61,22 @@ var Script;
         await Script.ConfigLoader.getInstance().loadConfig();
         ui = new Script.VUIHandler();
         ui.maxRounds = Script.ConfigLoader.getInstance().config.MAX_ROUNDS;
-        const { node: trackNode, offset: trackOffset, borderNode } = buildTrack();
+        const trackNode = graph.getChildrenByName("Track")[0];
+        const { offset: trackOffset, borderNode } = buildTrack(trackNode);
         graph.appendChild(trackNode);
         graph.appendChild(borderNode);
+        const carGraph = new fudge.Node("Cars");
         const others = await client.getOtherCars();
-        let color;
-        if (others.length > 0) {
-            await createPCCar(graph, track, trackOffset, false);
-            await createNPCCar(graph, track, trackOffset, false);
-            color = Script.PLAYER_TWO_COLOR;
-            client.pingPlayerOne(others[0]);
-            const pos = Script.CAR_POSITIONS[Script.PLAYER_ONE_COLOR];
-            const rot = 0;
-            client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
-            client.lastRotation = rot;
-        }
-        else {
-            await createPCCar(graph, track, trackOffset, true);
-            await createNPCCar(graph, track, trackOffset, true);
-            color = Script.PLAYER_ONE_COLOR;
-            const pos = Script.CAR_POSITIONS[Script.PLAYER_TWO_COLOR];
-            const rot = 0;
-            client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
-            client.lastRotation = rot;
-        }
-        const cameraPos = Script.CAR_POSITIONS[color].toVector3();
+        const playerColor = others.length === 0 ? Script.PLAYER_ONE_COLOR : Script.PLAYER_TWO_COLOR;
+        const npcColor = others.length === 0 ? Script.PLAYER_TWO_COLOR : Script.PLAYER_ONE_COLOR;
+        await createPCCar(carGraph, track, trackOffset, playerColor);
+        await createNPCCar(carGraph, track, trackOffset, npcColor);
+        const pos = Script.CAR_POSITIONS[playerColor];
+        const rot = 0;
+        client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
+        client.lastRotation = rot;
+        graph.appendChild(carGraph);
+        const cameraPos = Script.CAR_POSITIONS[playerColor].toVector3();
         cameraPos.z = cameraPos.y - 1.5;
         cameraPos.y = 1;
         camera = new Script.Camera(cameraPos, viewport);
@@ -93,8 +84,7 @@ var Script;
         fudge.Loop.addEventListener("loopFrame" /* fudge.EVENT.LOOP_FRAME */, update);
         fudge.Loop.start();
     }
-    async function createPCCar(graph, track, offset, playerOne) {
-        const color = playerOne ? Script.PLAYER_ONE_COLOR : Script.PLAYER_TWO_COLOR;
+    async function createPCCar(graph, track, offset, color) {
         const trackHandler = new Script.TrackHandler(track, offset);
         pcCar = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.KeyboardHandler(), trackHandler, client);
         pcCheckpointHandler = pcCar.getComponent(Script.CarCheckpointScript);
@@ -106,14 +96,13 @@ var Script;
         graph.addChild(pcCar);
         cars.push(pcCar);
     }
-    async function createNPCCar(graph, track, offset, playerOne) {
-        const color = playerOne ? Script.PLAYER_TWO_COLOR : Script.PLAYER_ONE_COLOR;
+    async function createNPCCar(graph, track, offset, color) {
         const car = new Script.Car(color, Script.CAR_POSITIONS[color], new Script.AIHandler(), new Script.TrackHandler(track, offset), client);
         await car.initializeAnimation();
         graph.addChild(car);
         cars.push(car);
     }
-    function buildTrack() {
+    function buildTrack(trackNode) {
         track = [
             [new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass(), new Script.TileGrass()],
             [new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass(), new Script.TileGrass(), new Script.TileTurn("Bottom", "Right"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileStraight("Horizontal"), new Script.TileTurn("Left", "Bottom"), new Script.TileGrass()],
@@ -127,7 +116,8 @@ var Script;
         checkpoints = [new fudge.Vector2(2, 1), new fudge.Vector2(5, 2), new fudge.Vector2(10, 1), new fudge.Vector2(14, 4), new fudge.Vector2(11, 6)];
         const offset = new fudge.Vector2(-1, -2);
         const trackBuilder = new Script.TrackBuilder();
-        return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset) };
+        trackBuilder.buildTrack(trackNode, track, offset);
+        return { offset, borderNode: trackBuilder.buildBorder(track, offset) };
     }
     async function update(_event) {
         let allPlayersReady = false;
@@ -621,16 +611,15 @@ var Script;
 (function (Script) {
     var fudge = FudgeCore;
     class TrackBuilder {
-        buildTrack(track, offset) {
-            const trackGraph = new fudge.Node("TrackAbc");
+        buildTrack(trackNode, track, offset) {
             for (let z = 0; z < track.length; z++) {
                 for (let x = 0; x < track[z].length; x++) {
                     if (!(x + offset.x === 0 && z + offset.y === 0)) {
-                        this.buildTile(track[z][x], new fudge.Vector3(x, 0, z), trackGraph, offset);
+                        this.buildTile(track[z][x], new fudge.Vector3(x, 0, z), trackNode, offset);
                     }
                 }
             }
-            return trackGraph;
+            return trackNode;
         }
         buildTile(tile, position, trackGraph, offset) {
             const node = new fudge.Node(`${position.x}_${position.z}`);
@@ -782,7 +771,7 @@ var Script;
             const material = fudge.Project.getResourcesByName("texGrass")[0];
             this.addComponent(new fudge.ComponentTransform());
             const mtx = new fudge.Matrix4x4();
-            mtx.translate(new fudge.Vector3(0, -0.251, -0.5));
+            mtx.translate(new fudge.Vector3(0, 0, -0.5));
             mtx.rotateX(-90);
             let node = new fudge.Node(`Quad`);
             let cmpMesh = new fudge.ComponentMesh();
@@ -820,7 +809,7 @@ var Script;
             for (let x = 0; x < 2; x++) {
                 for (let z = 0; z < 2; z++) {
                     const mtx = new fudge.Matrix4x4();
-                    mtx.translate(new fudge.Vector3(x - 0.5, -0.25, z - 1));
+                    mtx.translate(new fudge.Vector3(x - 0.5, 0, z - 1));
                     mtx.rotateX(-90);
                     let node = new fudge.Node(`Quad_${x}_${z}`);
                     let cmpMesh = new fudge.ComponentMesh();
@@ -898,11 +887,11 @@ var Script;
             const materialTR = fudge.Project.getResourcesByName("texRoadStraight")[0];
             const materialBL = fudge.Project.getResourcesByName("texRoadStraight")[0];
             const materialBR = fudge.Project.getResourcesByName("texRoadTurnInner")[0];
-            const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, -0.25, 0), 180);
-            const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.251, 0), 180);
-            const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, -0.25, 0), 90);
-            const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, -0.25, -1), 180);
-            const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, -0.25, -1), 180);
+            const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, 0, 0), 180);
+            const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.001, 0), 180);
+            const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, 0, 0), 90);
+            const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, 0, -1), 180);
+            const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, 0, -1), 180);
             this.appendChild(nodeTL);
             this.appendChild(nodeGrassTL);
             this.appendChild(nodeTR);

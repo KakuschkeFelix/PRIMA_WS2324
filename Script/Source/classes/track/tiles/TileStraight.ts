@@ -15,7 +15,7 @@ namespace Script {
                   for (let x = 0; x < 2; x++) {
                         for (let z = 0; z < 2; z++) {
                               const mtx = new fudge.Matrix4x4();
-                              mtx.translate(new fudge.Vector3(x - 0.5, -0.25, z - 1));
+                              mtx.translate(new fudge.Vector3(x - 0.5, 0, z - 1));
                               mtx.rotateX(-90);
                               let node = new fudge.Node(`Quad_${x}_${z}`);
                               let cmpMesh = new fudge.ComponentMesh();

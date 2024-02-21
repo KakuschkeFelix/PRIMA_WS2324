@@ -29,36 +29,30 @@ namespace Script {
 
     ui = new VUIHandler();
     ui.maxRounds = ConfigLoader.getInstance().config.MAX_ROUNDS;
+
+    const trackNode = graph.getChildrenByName("Track")[0];
     
-    const {node: trackNode, offset: trackOffset, borderNode} = buildTrack();
+    const {offset: trackOffset, borderNode} = buildTrack(trackNode);
     graph.appendChild(trackNode);
     graph.appendChild(borderNode);
+    const carGraph = new fudge.Node("Cars");
 
     const others = await client.getOtherCars();
     
-    let color: CarColor;
-    if (others.length > 0) {
-      await createPCCar(graph, track, trackOffset, false);
-      await createNPCCar(graph, track, trackOffset, false);
-      color = PLAYER_TWO_COLOR;
-      client.pingPlayerOne(others[0]);
-      const pos = CAR_POSITIONS[PLAYER_ONE_COLOR];
-      const rot = 0;
-      client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
-      client.lastRotation = rot;
-    } else {
-      await createPCCar(graph, track, trackOffset, true);
-      await createNPCCar(graph, track, trackOffset, true);
-      color = PLAYER_ONE_COLOR;
-      const pos = CAR_POSITIONS[PLAYER_TWO_COLOR];
-      const rot = 0;
-      client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
-      client.lastRotation = rot;
-    }
+    const playerColor: CarColor = others.length === 0 ? PLAYER_ONE_COLOR : PLAYER_TWO_COLOR;
+    const npcColor = others.length === 0 ? PLAYER_TWO_COLOR : PLAYER_ONE_COLOR;
+    await createPCCar(carGraph, track, trackOffset, playerColor);
+    await createNPCCar(carGraph, track, trackOffset, npcColor);
+
+    const pos = CAR_POSITIONS[playerColor];
+    const rot = 0;
+    client.lastPosition = new fudge.Vector3(pos.x, 0, pos.y);
+    client.lastRotation = rot;
+    graph.appendChild(carGraph);
 
     
 
-    const cameraPos = CAR_POSITIONS[color].toVector3();
+    const cameraPos = CAR_POSITIONS[playerColor].toVector3();
     cameraPos.z = cameraPos.y - 1.5;
     cameraPos.y = 1;
     camera = new Camera(cameraPos, viewport);
@@ -68,8 +62,7 @@ namespace Script {
     fudge.Loop.start();
   }
 
-  async function createPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, playerOne: boolean): Promise<void> {
-    const color = playerOne ? PLAYER_ONE_COLOR : PLAYER_TWO_COLOR;
+  async function createPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, color: CarColor): Promise<void> {
     const trackHandler = new TrackHandler(track, offset);
     pcCar = new Car(color, CAR_POSITIONS[color], new KeyboardHandler(), trackHandler, client);
     pcCheckpointHandler = pcCar.getComponent(CarCheckpointScript);
@@ -82,15 +75,14 @@ namespace Script {
     cars.push(pcCar)
   }
 
-  async function createNPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, playerOne: boolean): Promise<void> {
-    const color = playerOne ? PLAYER_TWO_COLOR : PLAYER_ONE_COLOR;
+  async function createNPCCar(graph: fudge.Node, track: Track, offset: fudge.Vector2, color: CarColor): Promise<void> {
     const car = new Car(color, CAR_POSITIONS[color], new AIHandler(), new TrackHandler(track, offset), client);
     await car.initializeAnimation();
     graph.addChild(car);
     cars.push(car);
   }
 
-  function buildTrack(): {node: fudge.Node, offset: fudge.Vector2, borderNode: fudge.Node} {
+  function buildTrack(trackNode: fudge.Node): {offset: fudge.Vector2, borderNode: fudge.Node} {
     track = [
       [new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass(), new TileGrass()],
       [new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass(), new TileGrass(), new TileTurn("Bottom", "Right"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileStraight("Horizontal"), new TileTurn("Left", "Bottom"), new TileGrass()],
@@ -105,7 +97,8 @@ namespace Script {
     checkpoints = [new fudge.Vector2(2, 1), new fudge.Vector2(5, 2), new fudge.Vector2(10, 1), new fudge.Vector2(14, 4), new fudge.Vector2(11, 6)]
     const offset = new fudge.Vector2(-1, -2);
     const trackBuilder = new TrackBuilder();
-    return { node: trackBuilder.buildTrack(track, offset), offset, borderNode: trackBuilder.buildBorder(track, offset)};
+    trackBuilder.buildTrack(trackNode, track, offset)
+    return { offset, borderNode: trackBuilder.buildBorder(track, offset)};
   }
 
   async function update(_event: Event): Promise<void> {

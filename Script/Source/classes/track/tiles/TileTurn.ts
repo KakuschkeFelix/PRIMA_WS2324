@@ -49,11 +49,11 @@ namespace Script {
                   const materialTR = fudge.Project.getResourcesByName("texRoadStraight")[0] as fudge.Material;
                   const materialBL = fudge.Project.getResourcesByName("texRoadStraight")[0] as fudge.Material;
                   const materialBR = fudge.Project.getResourcesByName("texRoadTurnInner")[0] as fudge.Material;
-                  const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, -0.25, 0), 180);
-                  const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.251, 0), 180);
-                  const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, -0.25, 0), 90);
-                  const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, -0.25, -1), 180);
-                  const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, -0.25, -1), 180);
+                  const nodeTL = this.buildQuad(materialTL, new fudge.Vector3(0.5, 0, 0), 180);
+                  const nodeGrassTL = this.buildQuad(materialGrassTL, new fudge.Vector3(0.5, -0.001, 0), 180);
+                  const nodeTR = this.buildQuad(materialTR, new fudge.Vector3(-0.5, 0, 0), 90);
+                  const nodeBL = this.buildQuad(materialBL, new fudge.Vector3(0.5, 0, -1), 180);
+                  const nodeBR = this.buildQuad(materialBR, new fudge.Vector3(-0.5, 0, -1), 180);
                   this.appendChild(nodeTL);
                   this.appendChild(nodeGrassTL);
                   this.appendChild(nodeTR);

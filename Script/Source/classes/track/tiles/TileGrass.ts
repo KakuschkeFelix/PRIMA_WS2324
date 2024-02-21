@@ -13,7 +13,7 @@ namespace Script {
                   const material = fudge.Project.getResourcesByName("texGrass")[0] as fudge.Material;
                   this.addComponent(new fudge.ComponentTransform());
                   const mtx = new fudge.Matrix4x4();
-                  mtx.translate(new fudge.Vector3(0, -0.251, -0.5));
+                  mtx.translate(new fudge.Vector3(0, 0, -0.5));
                   mtx.rotateX(-90);
                   let node = new fudge.Node(`Quad`);
                   let cmpMesh = new fudge.ComponentMesh();

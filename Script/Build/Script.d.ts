@@ -176,7 +176,7 @@ declare namespace Script {
 declare namespace Script {
     import fudge = FudgeCore;
     class TrackBuilder {
-        buildTrack(track: Track, offset: fudge.Vector2): fudge.Node;
+        buildTrack(trackNode: fudge.Node, track: Track, offset: fudge.Vector2): fudge.Node;
         buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node;
         buildBorder(track: Track, offset: fudge.Vector2, grassRows?: number): fudge.Node;
         private buildBorderAndGrassTiles;

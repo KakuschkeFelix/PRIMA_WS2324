@@ -2,16 +2,15 @@ namespace Script {
       import fudge = FudgeCore;
 
       export class TrackBuilder {
-            public buildTrack(track: Track, offset: fudge.Vector2): fudge.Node {
-                  const trackGraph = new fudge.Node("TrackAbc");
+            public buildTrack(trackNode: fudge.Node, track: Track, offset: fudge.Vector2): fudge.Node {
                   for (let z = 0; z < track.length; z++) {
                         for (let x = 0; x < track[z].length; x++) {
                               if (!(x + offset.x === 0 && z + offset.y === 0)) {
-                                    this.buildTile(track[z][x], new fudge.Vector3(x, 0, z), trackGraph, offset);
+                                    this.buildTile(track[z][x], new fudge.Vector3(x, 0, z), trackNode, offset);
                               }
                         }
                   }
-                  return trackGraph;
+                  return trackNode;
             }
 
             public buildTile(tile: Tile, position: fudge.Vector3, trackGraph: fudge.Node, offset: fudge.Vector2): fudge.Node {

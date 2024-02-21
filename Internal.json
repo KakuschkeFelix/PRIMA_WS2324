@@ -493,14 +493,6 @@
               }
             ]
           }
-        },
-        {
-          "ƒ.Node": {
-            "name": "Background",
-            "active": true,
-            "components": {},
-            "children": []
-          }
         }
       ],
       "idResource": "Graph|2024-02-03T13:51:02.811Z|02254",
