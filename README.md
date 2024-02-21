@@ -1,5 +1,28 @@
 # PRIMA WiSe 23/24
 
+- Titel: FurtwangenDrift
+- Autor: Felix Kakuschke
+- Jahr: Wintersemester 23/24
+- Curriculum und Semester: Medieninformatik (MIB) 7
+- Kurs: PRIMA
+- Dozent: Prof. Jirka Dell´Oro-Friedl
+- Link zur Anwendung: https://kakuschkefelix.github.io/PRIMA_WS2324/
+- Link zum Source Code: https://github.com/KakuschkeFelix/PRIMA_WS2324/tree/main/Script/Source
+- Link zum Design Dokument: https://github.com/KakuschkeFelix/PRIMA_WS2324/blob/main/PRIMA_DOCS.pdf
+
+# Anleitung
+## Benutzung
+1. Das Spiel kann mit W/A/S/D oder den Pfeiltasten gespielt werden.
+2. Zu Beginn muss eine Websocket Adresse eingegeben werden, welche zum Server zeigt (siehe Installation)
+3. Nachdem beide Spieler eine Verbindung aufgebaut haben, kann das Spiel gespielt werden. Insgesamt müssen 3 Runden absolviert werden (konfigurierbar in external.json)
+
+## Installation/Starten des Servers
+1. Dieses Repository klonen
+2. Die NPM Pakete installieren (`npm install`)
+3. Den Server mit `npm run start:server` starten
+   1. Optional kann ein Port angegeben werden mittels `npm run start:server -- --port xxxx`
+4. Der Server gibt die Portnummer aus, die Verbindung erfolgt über `ws://<adresse>:<port>` z.B. `ws://localhost:4000`
+
 # Bewertungskriterien
 | Erfüllt | Nr | Kriterium           | Erklärung                                                                                                                                     |
 |---|---:|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
