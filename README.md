@@ -10,7 +10,7 @@
 - Link zum Source Code
   - Client: https://github.com/KakuschkeFelix/PRIMA_WS2324/tree/main/Script/Source
   - Server: https://github.com/KakuschkeFelix/PRIMA_WS2324/tree/main/Server
-- Link zum Design Dokument: https://github.com/KakuschkeFelix/PRIMA_WS2324/blob/main/PRIMA_DOCS.pdf
+- Link zum Design Dokument: https://github.com/KakuschkeFelix/PRIMA_WS2324/blob/main/FurtwangenDrift.pdf
 
 # Anleitung
 ## Benutzung
